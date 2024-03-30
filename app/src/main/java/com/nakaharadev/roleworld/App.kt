@@ -24,7 +24,7 @@ class App : Application() {
         val client = OkHttpClient.Builder().addInterceptor(interceptor).build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.33:8080/app/")
+            .baseUrl("http://192.168.0.114:8080/app/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

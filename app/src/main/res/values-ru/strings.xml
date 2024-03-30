@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_to_roleworld">Добро пожаловать!</string>
+    <string name="sign_in">войти</string>
+    <string name="sign_up">регистрация</string>
+    <string name="nickname">ник</string>
+    <string name="email">почта</string>
+    <string name="password">пароль</string>
+    <string name="repeat_password">повторите пароль</string>
+    <string name="done">готово</string>
+</resources>

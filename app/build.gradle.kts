@@ -49,6 +49,9 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
 
+    // Preferences
+    implementation(libs.androidx.preference)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

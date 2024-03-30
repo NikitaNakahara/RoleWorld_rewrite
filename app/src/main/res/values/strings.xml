@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">RoleWorld</string>
+    <string name="app_name" translatable="false">RoleWorld</string>
+    <string name="welcome_to_roleworld">Welcome</string>
+    <string name="sign_in">sign_in</string>
+    <string name="sign_up">sign_up</string>
+    <string name="nickname">nickname</string>
+    <string name="email">email</string>
+    <string name="password">password</string>
+    <string name="repeat_password">repeat password</string>
+    <string name="done">done</string>
 </resources>
