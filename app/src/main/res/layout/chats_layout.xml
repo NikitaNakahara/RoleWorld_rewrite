@@ -16,7 +16,8 @@
                 android:text="@string/empty_hint"
                 android:textSize="21sp"
                 android:textColor="@color/gray_text"
-                android:id="@+id/chats_list_empty"/>
+                android:id="@+id/chats_list_empty"
+                android:paddingTop="20dp"/>
         </LinearLayout>
     </ScrollView>
     <ImageView

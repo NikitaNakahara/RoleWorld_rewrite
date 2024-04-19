@@ -24,4 +24,5 @@
     <string name="exit_from_account">выйти из аккаунта</string>
     <string name="confirm_ask">уверен?</string>
     <string name="load">загрузка</string>
+    <string name="error">ошибка</string>
 </resources>

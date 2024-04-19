@@ -22,6 +22,10 @@ interface NetworkApi {
     @POST("update_user/{user_id}/avatar")
     fun updateAvatar(@Path("user_id") id: String, @Part avatar: MultipartBody.Part): Call<UpdateResponse>
 
+    @Multipart
+    @POST("update_user/{user_id}/add_character/{name}")
+    fun addCharacter(@Path("user_id") id: String, @Path("name") characterName: String, @Part avatar: MultipartBody.Part): Call<AddResponse>
+
     @POST("update_user/{user_id}/nickname")
     fun updateNickname(@Path("user_id") id: String, @Body body: UpdateRequest): Call<UpdateResponse>
 

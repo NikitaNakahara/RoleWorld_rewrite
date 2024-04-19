@@ -24,4 +24,5 @@
     <string name="exit_from_account">exit from account</string>
     <string name="confirm_ask">are you sure?</string>
     <string name="load">load</string>
+    <string name="error">error</string>
 </resources>

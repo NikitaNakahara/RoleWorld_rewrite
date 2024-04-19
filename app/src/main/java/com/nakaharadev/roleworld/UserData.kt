@@ -1,8 +1,7 @@
 package com.nakaharadev.roleworld
 
 import android.graphics.Bitmap
-import android.util.Log
-import com.google.gson.GsonBuilder
+import com.nakaharadev.roleworld.models.Character
 
 
 object UserData {
@@ -11,4 +10,6 @@ object UserData {
     var email = ""
     var password = ""
     var roundedAvatar: Bitmap? = null
+    var characters = HashMap<String, Character>()
+    var charactersId = ArrayList<String>()
 }
