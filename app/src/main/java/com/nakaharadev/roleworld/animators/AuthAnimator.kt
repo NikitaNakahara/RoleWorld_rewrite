@@ -1,10 +1,13 @@
 package com.nakaharadev.roleworld.animators
 
 import android.animation.Animator
+import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
+import android.widget.TextView
 import com.nakaharadev.roleworld.Converter
 
 object AuthAnimator {
@@ -234,6 +237,22 @@ object AuthAnimator {
             override fun onAnimationRepeat(animation: Animator) {}
 
         })
+        animator.start()
+    }
+
+    fun showErrorMessage(
+        text: String,
+        errorDrawable: Drawable,
+        errorView: TextView,
+        views: List<TextView>
+    ) {
+        for (view: TextView in views) {
+            view.setBackgroundDrawable(errorDrawable)
+        }
+
+        errorView.text = text
+        val animator = ObjectAnimator.ofFloat(errorView, "alpha", 0.0f, 1.0f)
+        animator.duration = 300
         animator.start()
     }
 }

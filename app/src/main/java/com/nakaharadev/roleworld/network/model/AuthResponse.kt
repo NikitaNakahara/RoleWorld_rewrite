@@ -1,4 +1,4 @@
-package com.nakaharadev.roleworld.network
+package com.nakaharadev.roleworld.network.model
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
@@ -10,5 +10,9 @@ data class AuthResponse(
 
     @SerializedName("userId")
     @Expose
-    val userId: String
+    val userId: String,
+
+    @SerializedName("nickname")
+    @Expose
+    val nickname: String
 )

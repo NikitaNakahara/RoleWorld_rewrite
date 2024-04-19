@@ -1,4 +1,4 @@
-package com.nakaharadev.roleworld.network
+package com.nakaharadev.roleworld.network.model
 
 object AuthRequest {
     data class SignIn(

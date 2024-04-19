@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.nakaharadev.roleworld.ui.ImageClipperView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/image_clipper"/>
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="12dp"
+        android:src="@drawable/back_icon"
+        android:id="@+id/clipper_back_button"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:paddingHorizontal="20dp"
+        android:gravity="center"
+        android:paddingBottom="20dp">
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/scale_swiper_bg"
+            android:paddingHorizontal="15dp"
+            android:id="@+id/clipper_scale_swiper">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textSize="35sp"
+                android:textAlignment="center"
+                android:layout_centerVertical="true"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:textSize="30sp"
+                android:textAlignment="center"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"/>
+        </RelativeLayout>
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="20dp"
+            android:src="@drawable/done_icon"
+            android:id="@+id/clipper_done_button" />
+    </LinearLayout>
+</RelativeLayout>

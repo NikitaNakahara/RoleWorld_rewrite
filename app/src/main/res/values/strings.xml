@@ -8,4 +8,15 @@
     <string name="password">password</string>
     <string name="repeat_password">repeat password</string>
     <string name="done">done</string>
+    <string name="user_already_exists">user already exists</string>
+    <string name="passwords_not_equals">passwords not equals</string>
+    <string name="user_not_found">user not found</string>
+    <string name="invalid_password">invalid password</string>
+    <string name="open_chat">open chats</string>
+    <string name="open_profile">open profile</string>
+    <string name="open_characters">open characters</string>
+    <string name="open_settings">open settings</string>
+    <string name="empty_hint">empty :(</string>
+    <string name="you_dont_have_friends">you don`t have friends :(</string>
+    <string name="you_dont_have_characters">you don`t have characters :(</string>
 </resources>

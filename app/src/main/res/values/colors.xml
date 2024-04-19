@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_bg">#fefefe</color>
+    <color name="window_bg">#fff</color>
+    <color name="nav_bar_bg">#dadbdc</color>
+
     <color name="main_text">#121212</color>
     <color name="gray_text">#444</color>
+    <color name="always_white_text">#fff</color>
+
+    <color name="divider">#666</color>
 
     <color name="red">#f00</color>
     <color name="blue">#00f</color>
 
     <color name="transparent">#0000</color>
+
+    <color name="main_ui">#00fffa</color>
 </resources>

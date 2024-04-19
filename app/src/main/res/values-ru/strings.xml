@@ -8,4 +8,15 @@
     <string name="password">пароль</string>
     <string name="repeat_password">повторите пароль</string>
     <string name="done">готово</string>
+    <string name="user_already_exists">пользователь уже существует</string>
+    <string name="passwords_not_equals">пароли не совпадают</string>
+    <string name="user_not_found">аккаунт не существует</string>
+    <string name="invalid_password">неверный пароль</string>
+    <string name="open_chat">открыть чаты</string>
+    <string name="open_profile">открыть профиль</string>
+    <string name="open_characters">открыть персонажей</string>
+    <string name="open_settings">открыть настройки</string>
+    <string name="empty_hint">пусто :(</string>
+    <string name="you_dont_have_friends">у тебя нет друзей :(</string>
+    <string name="you_dont_have_characters">у тебя нет персов :(</string>
 </resources>
