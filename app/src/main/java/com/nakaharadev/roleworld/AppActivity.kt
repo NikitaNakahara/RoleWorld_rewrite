@@ -273,9 +273,9 @@ class AppActivity : Activity() {
             }
 
             for (elem in array) {
+                UserData.characters[elem.id] = elem
                 saveCharacterToFile(elem, file)
                 saveCharacterAvatar(elem.avatar!!, elem.name)
-                addCharacterToUI(elem)
             }
         }.start()
     }
