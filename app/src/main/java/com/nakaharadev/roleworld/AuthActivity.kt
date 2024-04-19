@@ -3,18 +3,29 @@ package com.nakaharadev.roleworld
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.AnimatedVectorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.VideoView
 import com.nakaharadev.roleworld.animators.AuthAnimator
+import com.nakaharadev.roleworld.controllers.MenuController
 import com.nakaharadev.roleworld.network.model.AuthRequest
 import com.nakaharadev.roleworld.network.model.AuthResponse
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.ByteArrayOutputStream
+import java.io.FileOutputStream
 
 
 class AuthActivity : Activity() {
@@ -96,6 +107,12 @@ class AuthActivity : Activity() {
     private fun initSignIn() {
         findViewById<EditText>(R.id.sign_in_password).setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
+                findViewById<LinearLayout>(R.id.auth_load_indicator).visibility = View.VISIBLE
+                val loadBar = findViewById<ImageView>(R.id.auth_load_bar)
+                if (loadBar.drawable is Animatable) {
+                    (loadBar.drawable as AnimatedVectorDrawable).start()
+                }
+
                 val request = AuthRequest.SignIn(
                     findViewById<EditText>(R.id.sign_in_email).text.toString(),
                     findViewById<EditText>(R.id.sign_in_password).text.toString()
@@ -124,7 +141,8 @@ class AuthActivity : Activity() {
                             UserData.nickname = response.body()?.nickname.toString()
                             UserData.password = findViewById<EditText>(R.id.sign_in_password).text.toString()
                             UserData.email = findViewById<EditText>(R.id.sign_in_email).text.toString()
-                            finishAuth()
+
+                            loadUserAvatar()
                         }
                     }
 
@@ -140,6 +158,12 @@ class AuthActivity : Activity() {
     private fun initSignUp() {
         findViewById<EditText>(R.id.sign_up_repeat_password).setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
+                findViewById<LinearLayout>(R.id.auth_load_indicator).visibility = View.VISIBLE
+                val loadBar = findViewById<ImageView>(R.id.auth_load_bar)
+                if (loadBar.drawable is Animatable) {
+                    (loadBar.drawable as AnimatedVectorDrawable).start()
+                }
+
                 val password = findViewById<TextView>(R.id.sign_up_password)
                 val repeatPassword = findViewById<TextView>(R.id.sign_up_repeat_password)
 
@@ -170,6 +194,7 @@ class AuthActivity : Activity() {
                     UserData.email,
                     UserData.password
                 )
+
                 App.networkApi.signUp(request).enqueue(object: Callback<AuthResponse> {
                     override fun onResponse(
                         call: Call<AuthResponse>,
@@ -199,6 +224,42 @@ class AuthActivity : Activity() {
             }
             return@setOnEditorActionListener true
         }
+    }
+
+    private fun loadUserAvatar() {
+        App.networkApi.getAvatar(UserData.id).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+               val stream = response.body()?.byteStream()
+
+                val options = BitmapFactory.Options()
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888
+
+                UserData.roundedAvatar = BitmapFactory.decodeStream(stream, null, options)
+
+                saveAvatarToFile()
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {}
+
+        })
+    }
+
+    private fun saveAvatarToFile() {
+        Thread {
+            val fos = FileOutputStream("${filesDir.path}/user_avatar.png")
+            val bos = ByteArrayOutputStream()
+            UserData.roundedAvatar?.compress(Bitmap.CompressFormat.PNG, 0, bos)
+            val data = bos.toByteArray()
+            bos.close()
+
+            fos.write(data)
+            fos.flush()
+            fos.close()
+
+            runOnUiThread {
+                finishAuth()
+            }
+        }.start()
     }
 
     private fun finishAuth() {

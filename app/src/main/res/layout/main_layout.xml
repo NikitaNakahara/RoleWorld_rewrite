@@ -50,8 +50,45 @@
                     android:layout_width="match_parent"
                     android:layout_height="70dp"
                     android:id="@+id/navigation_bar"
-                    android:orientation="horizontal"
                     android:background="@drawable/navigation_bar_bg">
+                   <ViewFlipper
+                       android:layout_width="match_parent"
+                       android:layout_height="match_parent"
+                       android:id="@+id/navbar_flipper"
+                       android:inAnimation="@anim/flipper_in"
+                       android:outAnimation="@anim/flipper_out">
+                       <LinearLayout
+                           android:layout_width="match_parent"
+                           android:layout_height="match_parent"
+                           android:orientation="horizontal">
+
+                       </LinearLayout>
+                       <LinearLayout
+                           android:layout_width="match_parent"
+                           android:layout_height="match_parent"
+                           android:gravity="center"
+                           android:paddingHorizontal="20dp">
+                           <TextView
+                               android:layout_width="0dp"
+                               android:layout_height="35dp"
+                               android:layout_weight="1"
+                               android:text="@string/confirm_ask"
+                               android:textColor="@color/main_text"
+                               android:textSize="25sp"
+                               android:layout_marginEnd="10dp"/>
+                           <ImageView
+                               android:layout_width="35dp"
+                               android:layout_height="35dp"
+                               android:src="@drawable/done_icon"
+                               android:layout_marginEnd="10dp"
+                               android:id="@+id/navbar_account_exit_ok"/>
+                           <ImageView
+                               android:layout_width="35dp"
+                               android:layout_height="35dp"
+                               android:src="@drawable/close_icon"
+                               android:id="@+id/navbar_account_exit_close"/>
+                       </LinearLayout>
+                   </ViewFlipper>
                 </LinearLayout>
             </LinearLayout>
             <LinearLayout

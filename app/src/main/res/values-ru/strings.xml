@@ -21,4 +21,7 @@
     <string name="you_dont_have_characters">у тебя нет персов :(</string>
     <string name="cant_update_nickname">не могу обновить ник</string>
     <string name="cant_update_avatar">не могу обновить аватар</string>
+    <string name="exit_from_account">выйти из аккаунта</string>
+    <string name="confirm_ask">уверен?</string>
+    <string name="load">загрузка</string>
 </resources>

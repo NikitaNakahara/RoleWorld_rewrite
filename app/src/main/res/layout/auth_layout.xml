@@ -29,6 +29,28 @@
             android:textColor="@color/always_white_text"
             android:textSize="21sp"/>
     </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentEnd="true"
+        android:gravity="center"
+        android:visibility="gone"
+        android:id="@+id/auth_load_indicator">
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/round_load_bar"
+            android:padding="15dp"
+            android:id="@+id/auth_load_bar"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/load"
+            android:textColor="@color/always_white_text"
+            android:textSize="21sp"/>
+    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"

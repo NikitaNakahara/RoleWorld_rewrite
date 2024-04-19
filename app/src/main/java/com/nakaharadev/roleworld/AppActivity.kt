@@ -195,6 +195,10 @@ class AppActivity : Activity() {
             findViewById<AnimatedImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar, false)
         }
 
+        findViewById<TextView>(R.id.profile_account_exit).setOnClickListener {
+            exitFromAccount()
+        }
+
         findViewById<TextView>(R.id.profile_nickname).text = UserData.nickname
         findViewById<TextView>(R.id.profile_email).text = UserData.email
         val spannableStr = SpannableString(UserData.id)
@@ -280,6 +284,31 @@ class AppActivity : Activity() {
             }
 
             return@setOnLongClickListener true
+        }
+    }
+
+    private fun exitFromAccount() {
+        val flipper = findViewById<ViewFlipper>(R.id.navbar_flipper)
+        val currentDisplayedChild = flipper.displayedChild
+
+        flipper.displayedChild = flipper.childCount - 1
+
+        findViewById<ImageView>(R.id.navbar_account_exit_ok).setOnClickListener {
+            val preferences = getSharedPreferences("user_data", Context.MODE_PRIVATE)
+            val editor = preferences.edit()
+            editor.remove("nickname")
+            editor.apply()
+
+            val avatarFile = File("${filesDir.path}/user_avatar.png")
+            if (avatarFile.exists()) {
+                avatarFile.delete()
+            }
+
+            startActivity(Intent(this, LauncherActivity::class.java))
+        }
+
+        findViewById<ImageView>(R.id.navbar_account_exit_close).setOnClickListener {
+            flipper.displayedChild = currentDisplayedChild
         }
     }
 

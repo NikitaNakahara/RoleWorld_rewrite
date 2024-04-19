@@ -80,7 +80,8 @@
         android:orientation="vertical"
         android:showDividers="middle"
         android:divider="@color/divider"
-        android:dividerPadding="10dp">
+        android:dividerPadding="10dp"
+        android:layout_weight="1">
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="100dp"
@@ -116,4 +117,12 @@
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="@string/exit_from_account"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:textColor="@color/red"
+        android:id="@+id/profile_account_exit"/>
 </LinearLayout>

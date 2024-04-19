@@ -2,17 +2,23 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center">
-        <TextView
-            android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/empty_hint"
-            android:textSize="21sp"
-            android:textColor="@color/gray_text"/>
-    </LinearLayout>
+            android:gravity="center"
+            android:id="@+id/chats_list">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/empty_hint"
+                android:textSize="21sp"
+                android:textColor="@color/gray_text"
+                android:id="@+id/chats_list_empty"/>
+        </LinearLayout>
+    </ScrollView>
     <ImageView
         android:layout_width="70dp"
         android:layout_height="70dp"
