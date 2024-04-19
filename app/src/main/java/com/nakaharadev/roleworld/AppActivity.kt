@@ -8,8 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
+import android.media.Image
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -28,9 +31,11 @@ import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
 import android.widget.ViewFlipper
+import com.nakaharadev.roleworld.controllers.InnerNotificationsController
 import com.nakaharadev.roleworld.controllers.MenuController
 import com.nakaharadev.roleworld.network.model.UpdateRequest
 import com.nakaharadev.roleworld.network.model.UpdateResponse
+import com.nakaharadev.roleworld.ui.AnimatedImageView
 import com.nakaharadev.roleworld.ui.ImageClipperView
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -74,8 +79,6 @@ class AppActivity : Activity() {
             val uri = data.data
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, uri)
 
-            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
-
             loadUserAvatar(bitmap)
         }
     }
@@ -116,12 +119,18 @@ class AppActivity : Activity() {
     private fun initMainView() {
         setContentView(R.layout.main_layout)
 
+        val colors = HashMap<Int, Int>()
+        colors[InnerNotificationsController.DONE] = getColor(R.color.green)
+        colors[InnerNotificationsController.ERROR] = getColor(R.color.red)
+
+        InnerNotificationsController.init(this, findViewById(R.id.inner_notification_view), colors)
+
         initMenu()
     }
 
     private fun initMenu() {
         if (UserData.roundedAvatar != null) {
-            findViewById<ImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar)
+            findViewById<AnimatedImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar, false)
         }
 
         MenuController.setCallback(object: MenuController.MenuStateCallback() {
@@ -166,9 +175,7 @@ class AppActivity : Activity() {
                 viewsMap["bg"]?.alpha = value / MenuController.getMaxValue()
             }
 
-            override fun onAfterChangeState(newState: Int, viewsMap: HashMap<String, View>?) {
-
-            }
+            override fun onAfterChangeState(newState: Int, viewsMap: HashMap<String, View>?) {}
         })
 
         MenuController.addButtonCallback(R.id.open_profile, this::loadProfile)
@@ -185,7 +192,7 @@ class AppActivity : Activity() {
 
     private fun loadProfile() {
         if (UserData.roundedAvatar != null) {
-            findViewById<ImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar)
+            findViewById<AnimatedImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar, false)
         }
 
         findViewById<TextView>(R.id.profile_nickname).text = UserData.nickname
@@ -248,11 +255,21 @@ class AppActivity : Activity() {
                                 val editor = preferences.edit()
                                 editor.putString("nickname", UserData.nickname)
                                 editor.apply()
+
+                                runOnUiThread {
+                                    InnerNotificationsController.showNotification(
+                                        getString(R.string.done),
+                                        InnerNotificationsController.DONE
+                                    )
+                                }
                             }
 
                             override fun onFailure(call: Call<UpdateResponse>, t: Throwable) {
                                 runOnUiThread {
-                                    Toast.makeText(this@AppActivity, "не удалось обновить ник", Toast.LENGTH_SHORT).show()
+                                    InnerNotificationsController.showNotification(
+                                        getString(R.string.cant_update_nickname),
+                                        InnerNotificationsController.ERROR
+                                    )
                                 }
                             }
                         }
@@ -315,7 +332,19 @@ class AppActivity : Activity() {
         findViewById<ImageView>(R.id.clipper_done_button).setOnClickListener {
             val clipped = clipper.getClipped()
 
+            if (UserData.roundedAvatar == null) {
+                findViewById<AnimatedImageView>(R.id.profile_avatar).setImageBitmap(null, false)
+            }
+
             UserData.roundedAvatar = clipped
+
+            val loadBar = findViewById<ImageView>(R.id.load_avatar_bar)
+            loadBar.visibility = View.VISIBLE
+            if (loadBar.drawable is Animatable) {
+                (loadBar.drawable as AnimatedVectorDrawable).start()
+            }
+
+            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
 
             updateAvatar(UserData.roundedAvatar!!)
         }
@@ -360,16 +389,30 @@ class AppActivity : Activity() {
                 response: Response<UpdateResponse>
             ) {
                 runOnUiThread {
+                    val loadBar = findViewById<ImageView>(R.id.load_avatar_bar)
+                    if (loadBar.drawable is Animatable) {
+                        (loadBar.drawable as AnimatedVectorDrawable).stop()
+                    }
+                    loadBar.visibility = View.GONE
+
                     findViewById<ImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar)
                     findViewById<ImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar)
 
                     saveAvatar(UserData.roundedAvatar!!)
+
+                    InnerNotificationsController.showNotification(
+                        getString(R.string.done),
+                        InnerNotificationsController.DONE
+                    )
                 }
             }
 
             override fun onFailure(call: Call<UpdateResponse>, t: Throwable) {
                 runOnUiThread {
-                    Toast.makeText(this@AppActivity, "не удалось загрузить аватар", Toast.LENGTH_SHORT).show()
+                    InnerNotificationsController.showNotification(
+                        getString(R.string.cant_update_avatar),
+                        InnerNotificationsController.ERROR
+                    )
                 }
             }
         })

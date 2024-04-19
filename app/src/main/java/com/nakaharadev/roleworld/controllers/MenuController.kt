@@ -70,7 +70,6 @@ object MenuController {
             override fun onClick() {
                 callback()
             }
-
         }
     }
 

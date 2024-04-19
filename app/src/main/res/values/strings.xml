@@ -19,4 +19,6 @@
     <string name="empty_hint">empty :(</string>
     <string name="you_dont_have_friends">you don`t have friends :(</string>
     <string name="you_dont_have_characters">you don`t have characters :(</string>
+    <string name="cant_update_nickname">can`t update nickname</string>
+    <string name="cant_update_avatar">can`t update avatar</string>
 </resources>

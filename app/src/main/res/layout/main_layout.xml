@@ -71,7 +71,7 @@
                         android:gravity="center_horizontal"
                         android:paddingVertical="20dp"
                         android:orientation="vertical">
-                        <ImageView
+                        <com.nakaharadev.roleworld.ui.AnimatedImageView
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:src="@drawable/open_profile_icon"
@@ -116,4 +116,16 @@
         </RelativeLayout>
         <include layout="@layout/clipper"/>
     </ViewFlipper>
+
+    <TextView
+        android:id="@+id/inner_notification_view"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:layout_centerHorizontal="true"
+        android:text="готово"
+        android:textColor="@color/always_white_text"
+        android:textSize="20sp"
+        android:paddingHorizontal="20dp"
+        android:background="@drawable/inner_notification_bg"
+        android:translationY="-30dp"/>
 </RelativeLayout>

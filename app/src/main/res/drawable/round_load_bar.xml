@@ -1,0 +1,34 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="100dp"
+            android:height="100dp"
+            android:viewportWidth="505"
+            android:viewportHeight="505">
+            <group
+                android:name="load_bar"
+                android:pivotX="252.5"
+                android:pivotY="252.5">
+                <path
+                    android:pathData="M485,252.5C485,380.05 380.05,485 252.5,485S20,380.05 20,252.5S124.95,20 252.5,20"
+                    android:strokeWidth="40"
+                    android:fillColor="#00000000"
+                    android:strokeColor="@color/main_text"
+                    android:strokeLineCap="round"/>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="load_bar">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="3000"
+                android:interpolator="@android:anim/linear_interpolator"
+                android:propertyName="rotation"
+                android:repeatCount="-1"
+                android:repeatMode="restart"
+                android:valueFrom="0"
+                android:valueTo="360"/>
+        </aapt:attr>
+    </target>
+</animated-vector>
