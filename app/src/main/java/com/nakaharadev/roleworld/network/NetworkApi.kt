@@ -1,6 +1,7 @@
 package com.nakaharadev.roleworld.network
 
 import com.nakaharadev.roleworld.network.model.*
+import com.nakaharadev.roleworldserver.models.GetCharacterResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -31,4 +32,10 @@ interface NetworkApi {
 
     @GET("get_user_data/{user_id}/avatar")
     fun getAvatar(@Path("user_id") id: String): Call<ResponseBody>
+
+    @GET("get_character/{id}")
+    fun getCharacter(@Path("id") id: String): Call<GetCharacterResponse>
+
+    @GET("get_character/avatar/{id}")
+    fun getCharacterAvatar(@Path("id") id: String): Call<ResponseBody>
 }

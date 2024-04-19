@@ -20,6 +20,7 @@ import com.nakaharadev.roleworld.animators.AuthAnimator
 import com.nakaharadev.roleworld.controllers.MenuController
 import com.nakaharadev.roleworld.network.model.AuthRequest
 import com.nakaharadev.roleworld.network.model.AuthResponse
+import com.nakaharadev.roleworldserver.models.GetCharacterResponse
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -141,6 +142,12 @@ class AuthActivity : Activity() {
                             UserData.nickname = response.body()?.nickname.toString()
                             UserData.password = findViewById<EditText>(R.id.sign_in_password).text.toString()
                             UserData.email = findViewById<EditText>(R.id.sign_in_email).text.toString()
+
+                            val charactersList = ArrayList<String>()
+                            for (elem in response.body()?.characters?.split(" ")!!) {
+                                charactersList.add(elem)
+                            }
+                            UserData.charactersId = charactersList
 
                             loadUserAvatar()
                         }

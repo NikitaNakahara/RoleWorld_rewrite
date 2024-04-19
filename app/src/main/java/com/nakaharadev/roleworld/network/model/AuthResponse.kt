@@ -14,5 +14,9 @@ data class AuthResponse(
 
     @SerializedName("nickname")
     @Expose
-    val nickname: String
+    val nickname: String,
+
+    @SerializedName("characters")
+    @Expose
+    val characters: String
 )

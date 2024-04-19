@@ -13,11 +13,13 @@ import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -43,6 +45,7 @@ import com.nakaharadev.roleworld.network.model.UpdateResponse
 import com.nakaharadev.roleworld.ui.AnimatedImageView
 import com.nakaharadev.roleworld.ui.CharacterLayout
 import com.nakaharadev.roleworld.ui.ImageClipperView
+import com.nakaharadev.roleworldserver.models.GetCharacterResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -66,6 +69,7 @@ class AppActivity : Activity() {
         Converter.init(this)
 
         loadCharacters()
+        syncCharacters()
         loadAvatar()
         initMainView()
     }
@@ -242,6 +246,40 @@ class AppActivity : Activity() {
         }
     }
 
+    private fun syncCharacters() {
+        if (UserData.charactersId.isEmpty()) return
+
+        val file = File("${filesDir.path}/characters.json")
+
+        val array = ArrayList<Character>()
+        Thread {
+            for (id in UserData.charactersId) {
+                if (UserData.characters[id] == null) {
+                    val response = App.networkApi.getCharacter(id).execute()
+
+                    val character = Character()
+                    character.id = id
+                    character.name = response.body()?.name!!
+
+                    val avatarResponse = App.networkApi.getCharacterAvatar(id).execute()
+                    val stream = avatarResponse.body()?.byteStream()
+                    val options = BitmapFactory.Options()
+                    options.inPreferredConfig = Bitmap.Config.ARGB_8888
+                    val avatar = BitmapFactory.decodeStream(stream, null, options)
+                    character.avatar = avatar
+
+                    array.add(character)
+                }
+            }
+
+            for (elem in array) {
+                saveCharacterToFile(elem, file)
+                saveCharacterAvatar(elem.avatar!!, elem.name)
+                addCharacterToUI(elem)
+            }
+        }.start()
+    }
+
     private fun initBg() {
         val view = findViewById<VideoView>(R.id.main_layout_bg)
 
@@ -254,6 +292,29 @@ class AppActivity : Activity() {
             } else {
                 view.scaleY = 1f / scaleX
             }
+        }
+
+        view.setOnErrorListener { mp, what, extra ->
+            if (extra and MediaPlayer.MEDIA_ERROR_UNSUPPORTED != 0) {
+                Log.e("Video error", "unsupported")
+            }
+            if (extra and MediaPlayer.MEDIA_ERROR_IO != 0) {
+                Log.e("Video error", "IO")
+            }
+            if (extra and MediaPlayer.MEDIA_ERROR_MALFORMED != 0) {
+                Log.e("Video error", "malformed")
+            }
+            if (extra and MediaPlayer.MEDIA_ERROR_TIMED_OUT != 0) {
+                Log.e("Video error", "timed_out")
+            }
+
+            Log.e("Video error", "mp=${mp} what=${what} extra=${extra}")
+            return@setOnErrorListener true
+        }
+
+        view.setOnInfoListener { mp, what, extra ->
+            Log.i("Video info", "mp=${mp} what=${what} extra=${extra}")
+            return@setOnInfoListener true
         }
 
         val uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.auth_bg)
@@ -456,6 +517,14 @@ class AppActivity : Activity() {
                 avatarFile.delete()
             }
 
+            for (id in UserData.charactersId) {
+                val character = UserData.characters[id]
+
+                File("${filesDir.path}/${character?.name}_avatar.png").delete()
+            }
+
+            File("${filesDir.path}/characters.json").delete()
+
             startActivity(Intent(this, LauncherActivity::class.java))
         }
 
@@ -512,36 +581,8 @@ class AppActivity : Activity() {
                                 character.id = response.body()?.id!!
 
                                 val charactersFile = File("${filesDir.path}/characters.json")
-                                if (!charactersFile.exists()) {
-                                    charactersFile.createNewFile()
+                                saveCharacterToFile(character, charactersFile)
 
-                                    val array = JsonArray()
-
-                                    val gson = GsonBuilder().create()
-                                    array.add(gson.toJsonTree(character.toSerializable()))
-
-                                    val json = gson.toJson(array)
-
-                                    val stream = DataOutputStream(FileOutputStream(charactersFile))
-                                    stream.writeUTF(json)
-                                    stream.flush()
-                                    stream.close()
-                                } else {
-                                    val stream = DataInputStream(FileInputStream(charactersFile))
-                                    var json = stream.readUTF()
-                                    stream.close()
-
-                                    val gson = GsonBuilder().create()
-                                    val array = gson.fromJson(json, JsonArray::class.java)
-                                    array.add(gson.toJsonTree(character.toSerializable()))
-
-                                    json = gson.toJson(array)
-
-                                    val outputStream = DataOutputStream(FileOutputStream(charactersFile))
-                                    outputStream.writeUTF(json)
-                                    outputStream.flush()
-                                    outputStream.close()
-                                }
 
                                 saveCharacterAvatar(character.avatar!!, character.name)
                                 UserData.characters[character.id] = character
@@ -617,6 +658,39 @@ class AppActivity : Activity() {
             fos.flush()
             fos.close()
         }.start()
+    }
+
+    private fun saveCharacterToFile(character: Character, file: File) {
+        if (!file.exists()) {
+            file.createNewFile()
+
+            val array = JsonArray()
+
+            val gson = GsonBuilder().create()
+            array.add(gson.toJsonTree(character.toSerializable()))
+
+            val json = gson.toJson(array)
+
+            val stream = DataOutputStream(FileOutputStream(file))
+            stream.writeUTF(json)
+            stream.flush()
+            stream.close()
+        } else {
+            val stream = DataInputStream(FileInputStream(file))
+            var json = stream.readUTF()
+            stream.close()
+
+            val gson = GsonBuilder().create()
+            val array = gson.fromJson(json, JsonArray::class.java)
+            array.add(gson.toJsonTree(character.toSerializable()))
+
+            json = gson.toJson(array)
+
+            val outputStream = DataOutputStream(FileOutputStream(file))
+            outputStream.writeUTF(json)
+            outputStream.flush()
+            outputStream.close()
+        }
     }
 
     private fun saveCharacterAvatar(avatar: Bitmap, name: String) {
