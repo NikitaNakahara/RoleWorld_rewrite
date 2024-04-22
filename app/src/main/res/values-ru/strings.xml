@@ -25,4 +25,8 @@
     <string name="confirm_ask">уверен?</string>
     <string name="load">загрузка</string>
     <string name="error">ошибка</string>
+    <string name="sex">пол</string>
+    <string name="description">описание</string>
+    <string name="text">текст</string>
+    <string name="bio">биография</string>
 </resources>

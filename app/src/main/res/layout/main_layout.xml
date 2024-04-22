@@ -176,6 +176,7 @@
                 android:src="@drawable/menu_icon"/>
         </RelativeLayout>
         <include layout="@layout/clipper"/>
+        <include layout="@layout/character_data"/>
     </ViewFlipper>
 
     <TextView

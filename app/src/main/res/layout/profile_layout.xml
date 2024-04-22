@@ -30,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:paddingVertical="26dp">
+            android:paddingVertical="25dp">
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -39,7 +39,7 @@
                 android:id="@+id/profile_nickname"
                 android:layout_marginBottom="15dp"
                 android:singleLine="true"
-                android:paddingStart="4dp"
+                android:paddingHorizontal="4dp"
                 android:background="@color/window_bg"
                 android:focusable="false"
                 android:focusableInTouchMode="false"
@@ -53,7 +53,7 @@
                 android:id="@+id/profile_email"
                 android:layout_marginBottom="5dp"
                 android:singleLine="true"
-                android:paddingStart="4dp"/>
+                android:paddingHorizontal="4dp"/>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">

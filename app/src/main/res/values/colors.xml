@@ -14,6 +14,7 @@
     <color name="blue">#00f</color>
 
     <color name="transparent">#0000</color>
+    <color name="transparent_character_block">#55ffffff</color>
 
     <color name="main_ui">#00fffa</color>
 </resources>

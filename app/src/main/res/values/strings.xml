@@ -25,4 +25,8 @@
     <string name="confirm_ask">are you sure?</string>
     <string name="load">load</string>
     <string name="error">error</string>
+    <string name="sex">sex</string>
+    <string name="description">description</string>
+    <string name="text">text</string>
+    <string name="bio">biography</string>
 </resources>

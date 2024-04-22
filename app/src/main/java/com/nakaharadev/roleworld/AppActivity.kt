@@ -42,6 +42,7 @@ import com.nakaharadev.roleworld.models.Character
 import com.nakaharadev.roleworld.network.model.AddResponse
 import com.nakaharadev.roleworld.network.model.UpdateRequest
 import com.nakaharadev.roleworld.network.model.UpdateResponse
+import com.nakaharadev.roleworld.services.NetworkService
 import com.nakaharadev.roleworld.ui.AnimatedImageView
 import com.nakaharadev.roleworld.ui.CharacterLayout
 import com.nakaharadev.roleworld.ui.ImageClipperView
@@ -62,11 +63,17 @@ import java.io.FileOutputStream
 class AppActivity : Activity() {
     private val RESULT_GET_AVATAR = 1
     private val RESULT_GET_CHARACTER_AVATAR = 2
+    private val RESULT_UPDATE_CHARACTER_AVATAR = 3
+
+    private var characterForUpdate: Character? = null
+    private var characterAvatarViewForUpdate: AnimatedImageView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Converter.init(this)
+
+        startService(Intent(this, NetworkService::class.java))
 
         loadCharacters()
         syncCharacters()
@@ -96,6 +103,11 @@ class AppActivity : Activity() {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, uri)
 
             loadCharacterAvatar(bitmap)
+        } else if (requestCode == RESULT_UPDATE_CHARACTER_AVATAR) {
+            val uri = data.data
+            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, uri)
+
+            updateCharacterAvatar(bitmap)
         }
     }
 
@@ -196,6 +208,57 @@ class AppActivity : Activity() {
             findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
 
             updateAvatar(UserData.roundedAvatar!!)
+        }
+
+        findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 1
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun updateCharacterAvatar(avatar: Bitmap) {
+        val clipper = findViewById<ImageClipperView>(R.id.image_clipper)
+        clipper.setImage(avatar)
+
+        var xPos = 0f
+
+        findViewById<RelativeLayout>(R.id.clipper_scale_swiper).setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    xPos = event.x
+
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val delta = event.x - xPos
+                    xPos = event.x
+
+                    clipper.changeSize(delta.toInt() * 2)
+
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_UP -> return@setOnTouchListener true
+            }
+
+            return@setOnTouchListener false
+        }
+
+        findViewById<ImageView>(R.id.clipper_back_button).setOnClickListener {
+            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 2
+        }
+
+        findViewById<ImageView>(R.id.clipper_done_button).setOnClickListener {
+            val clipped = clipper.getClipped()
+
+            if (characterForUpdate != null) {
+                characterForUpdate?.avatar = clipped
+            }
+
+            if (characterAvatarViewForUpdate != null) {
+                characterAvatarViewForUpdate?.setImageBitmap(clipped)
+            }
+
+            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 2
         }
 
         findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 1
@@ -625,7 +688,7 @@ class AppActivity : Activity() {
         val view = inflater.inflate(R.layout.character_view, null) as CharacterLayout
         view.setCharacterId(character.id)
         view.setOnClickListener {
-
+            openCharacterData(character)
         }
         view.findViewById<ImageView>(R.id.character_avatar).setImageBitmap(character.avatar)
         view.findViewById<TextView>(R.id.character_name).text = character.name
@@ -633,13 +696,60 @@ class AppActivity : Activity() {
         val profileView = inflater.inflate(R.layout.character_view, null) as CharacterLayout
         profileView.setCharacterId(character.id)
         profileView.setOnClickListener {
-
+            openCharacterData(character)
         }
         profileView.findViewById<ImageView>(R.id.character_avatar).setImageBitmap(character.avatar)
         profileView.findViewById<TextView>(R.id.character_name).text = character.name
 
         list.addView(view)
         profileList.addView(profileView)
+    }
+
+    private fun openCharacterData(character: Character) {
+        findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 2
+
+        findViewById<ImageView>(R.id.close_character_data).setOnClickListener {
+            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
+        }
+
+        findViewById<AnimatedImageView>(R.id.character_data_avatar).setImageBitmap(character.avatar!!, false)
+        findViewById<TextView>(R.id.character_data_name).text = character.name
+        findViewById<TextView>(R.id.character_data_id).text = character.id
+
+        initCharacterDataBg()
+
+        findViewById<AnimatedImageView>(R.id.character_data_avatar).setOnLongClickListener {
+            characterForUpdate = character
+            characterAvatarViewForUpdate = it as AnimatedImageView
+
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "image/*"
+            startActivityForResult(intent, RESULT_UPDATE_CHARACTER_AVATAR)
+
+            return@setOnLongClickListener true
+        }
+    }
+
+    private fun initCharacterDataBg() {
+        val view = findViewById<VideoView>(R.id.character_data_bg)
+
+        view.setOnPreparedListener { mediaPlayer ->
+            val videoRatio = mediaPlayer.videoWidth / mediaPlayer.videoHeight.toFloat()
+            val screenRatio = view.width / view.height.toFloat()
+            val scaleX = videoRatio / screenRatio
+            if (scaleX >= 1f) {
+                view.scaleX = scaleX
+            } else {
+                view.scaleY = 1f / scaleX
+            }
+        }
+
+        val uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.auth_bg)
+        view.setVideoURI(uri)
+        view.setOnCompletionListener {
+            view.start()
+        }
+        view.start()
     }
 
     private fun loadSettings() {
