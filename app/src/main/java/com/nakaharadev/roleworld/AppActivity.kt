@@ -43,6 +43,7 @@ import com.nakaharadev.roleworld.models.Character
 import com.nakaharadev.roleworld.network.model.responses.AddResponse
 import com.nakaharadev.roleworld.network.model.responses.GetAvatarResponse
 import com.nakaharadev.roleworld.network.model.responses.GetCharactersResponse
+import com.nakaharadev.roleworld.network.model.responses.UpdateResponse
 import com.nakaharadev.roleworld.network.tasks.GetAvatarTask
 import com.nakaharadev.roleworld.network.tasks.GetCharactersTask
 import com.nakaharadev.roleworld.network.tasks.SendNewCharacterTask
@@ -282,10 +283,6 @@ class AppActivity : Activity() {
         FileManagerService.addReadTask(ReadCharactersFileTask(filesDir.path)) {
             it as Character
 
-            runOnUiThread {
-                Toast.makeText(this, it.desc, Toast.LENGTH_SHORT).show()
-            }
-
             UserData.characters[it.id] = it
             UserData.charactersId.add(it.id)
             runOnUiThread {
@@ -392,6 +389,7 @@ class AppActivity : Activity() {
             addCharacterToUI(UserData.characters[id]!!)
         }
 
+        loadChats(isInit = true)
         initMenu()
     }
 
@@ -442,7 +440,7 @@ class AppActivity : Activity() {
         })
 
         MenuController.addButtonCallback(R.id.open_profile, this::loadProfile)
-        MenuController.addButtonCallback(R.id.open_chat, this::loadChat)
+        MenuController.addButtonCallback(R.id.open_chat, this::loadChats)
         MenuController.addButtonCallback(R.id.open_characters, this::loadCharactersView)
         MenuController.addButtonCallback(R.id.open_settings, this::loadSettings)
 
@@ -456,14 +454,23 @@ class AppActivity : Activity() {
     private fun loadProfile() {
         findViewById<TextView>(R.id.profile_nickname).text = UserData.nickname
         findViewById<TextView>(R.id.profile_email).text = UserData.email
-        val spannableStr = SpannableString(UserData.id)
+
+        val spannableStr = if (UserData.showId.isNotEmpty())
+            SpannableString(UserData.showId)
+        else
+            SpannableString(UserData.id)
+
         spannableStr.setSpan(UnderlineSpan(), 0, spannableStr.length, 0)
         findViewById<TextView>(R.id.profile_id).text = spannableStr
 
-        findViewById<TextView>(R.id.profile_id).setOnLongClickListener {
+        findViewById<TextView>(R.id.profile_id).setOnClickListener {
             val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val clipData = ClipData.newPlainText("user_id", (it as TextView).text)
             clipboardManager.setPrimaryClip(clipData)
+        }
+
+        findViewById<TextView>(R.id.profile_id).setOnLongClickListener {
+            showChangeIdDialog()
 
             return@setOnLongClickListener true
         }
@@ -534,6 +541,68 @@ class AppActivity : Activity() {
         }
     }
 
+    private fun showChangeIdDialog() {
+        val flipper = findViewById<ViewFlipper>(R.id.navbar_flipper)
+        val currentDisplayed = flipper.displayedChild
+        flipper.displayedChild = 3
+
+        val input = findViewById<EditText>(R.id.change_show_id_input)
+
+        input.setBackgroundResource(R.color.transparent)
+        if (UserData.showId.isNotEmpty()) {
+            input.setText(UserData.showId)
+        }
+
+        findViewById<ImageView>(R.id.change_show_id_done).setOnClickListener {
+            val value = input.text.toString()
+
+            it as ImageView
+
+            if (UserData.showId == value) {
+                flipper.displayedChild = currentDisplayed
+                return@setOnClickListener
+            }
+
+            it.setImageResource(R.drawable.round_load_bar)
+            (it.drawable as AnimatedVectorDrawable).start()
+
+            NetworkService.addTask(UpdateUserDataTask(
+                UserData.id,
+                value,
+                UpdateUserDataTask.UPDATE_TYPE_SHOW_ID
+            )) { response ->
+                response as UpdateResponse
+                if (response.status == 409) {
+                    runOnUiThread {
+                        input.setBackgroundResource(R.drawable.navbar_input_error)
+                        input.setText("")
+                        InnerNotificationsController.showNotification(getString(R.string.id_already_exists), InnerNotificationsController.ERROR)
+                    }
+
+                    return@addTask
+                }
+
+                val preferences = getSharedPreferences("user_data", Context.MODE_PRIVATE)
+                val editor = preferences.edit()
+                editor.putString("show_id", value)
+                editor.apply()
+
+                runOnUiThread {
+                    flipper.displayedChild = currentDisplayed
+
+                    (it.drawable as AnimatedVectorDrawable).stop()
+                    it.setImageResource(R.drawable.minim_done_icon)
+
+                    val spannableStr = SpannableString(value)
+                    spannableStr.setSpan(UnderlineSpan(), 0, spannableStr.length, 0)
+                    findViewById<TextView>(R.id.profile_id).text = spannableStr
+
+                    UserData.showId = value
+                }
+            }
+        }
+    }
+
     private fun exitFromAccount() {
         val flipper = findViewById<ViewFlipper>(R.id.navbar_flipper)
         val currentDisplayedChild = flipper.displayedChild
@@ -567,8 +636,21 @@ class AppActivity : Activity() {
         }
     }
 
-    private fun loadChat() {
-        findViewById<ViewFlipper>(R.id.main_flipper).displayedChild = 0
+    private fun loadChats(isInit: Boolean = false) {
+        if (!isInit)
+            findViewById<ViewFlipper>(R.id.main_flipper).displayedChild = 0
+
+        findViewById<ImageView>(R.id.new_chat).setOnClickListener {
+            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 3
+
+            findViewById<ImageView>(R.id.close_new_chat).setOnClickListener {
+                findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
+            }
+
+            findViewById<ImageView>(R.id.new_chat_search).setOnClickListener {
+
+            }
+        }
     }
 
     private fun loadCharactersView() {

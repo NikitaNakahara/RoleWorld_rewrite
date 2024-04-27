@@ -30,4 +30,7 @@
     <string name="text">текст</string>
     <string name="bio">биография</string>
     <string name="nothing_to_show">ничего нет :(</string>
+    <string name="go_original">давай красиво)</string>
+    <string name="id_already_exists">id уже существует</string>
+    <string name="search">поиск</string>
 </resources>

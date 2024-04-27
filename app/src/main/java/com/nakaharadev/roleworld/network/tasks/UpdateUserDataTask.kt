@@ -11,6 +11,7 @@ class UpdateUserDataTask(val id: String, val value: String, val type: Int) : Abs
 
     companion object {
         val UPDATE_TYPE_NICKNAME = 1
+        val UPDATE_TYPE_SHOW_ID = 2
     }
 
     @Throws(Exception::class)
@@ -19,7 +20,9 @@ class UpdateUserDataTask(val id: String, val value: String, val type: Int) : Abs
 
         if (type == UPDATE_TYPE_NICKNAME)
             response = App.networkApi.updateNickname(UserData.id, UpdateRequest(value)).execute().body()!!
-        else return
+        else if (type == UPDATE_TYPE_SHOW_ID) {
+            response = App.networkApi.updateShowId(UserData.id, UpdateRequest(value)).execute().body()!!
+        } else return
 
         callback(response)
     }

@@ -79,10 +79,12 @@ object CharacterDataController {
     }
 
     private fun initAvatarChange() {
-        layout.findViewById<AnimatedImageView>(R.id.character_data_avatar).setOnClickListener {
+        layout.findViewById<AnimatedImageView>(R.id.character_data_avatar).setOnLongClickListener {
             it as ImageView
 
             callback(it, characterObj)
+
+            return@setOnLongClickListener true
         }
     }
 

@@ -35,6 +35,9 @@ interface NetworkApi {
     @POST("update_user/{user_id}/nickname")
     fun updateNickname(@Path("user_id") id: String, @Body body: UpdateRequest): Call<UpdateResponse>
 
+    @POST("update_user/{user_id}/show_id")
+    fun updateShowId(@Path("user_id") id: String, @Body body: UpdateRequest): Call<UpdateResponse>
+
     @POST("update_character/{id}/{data_type}")
     fun updateCharacterData(@Path("id") id: String, @Path("data_type") dataType: String, @Body body: UpdateRequest): Call<UpdateResponse>
 

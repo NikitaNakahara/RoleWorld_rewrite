@@ -30,4 +30,7 @@
     <string name="text">text</string>
     <string name="bio">biography</string>
     <string name="nothing_to_show">nothing to show :(</string>
+    <string name="go_original">go original</string>
+    <string name="id_already_exists">id already exists</string>
+    <string name="search">search</string>
 </resources>
