@@ -9,6 +9,7 @@ object UserData {
     var nickname = ""
     var email = ""
     var password = ""
+    var showId = ""
     var roundedAvatar: Bitmap? = null
     var characters = HashMap<String, Character>()
     var charactersId = ArrayList<String>()

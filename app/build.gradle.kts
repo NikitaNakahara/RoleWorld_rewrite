@@ -3,6 +3,14 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
 }
 
+buildscript {
+    repositories {
+        maven {
+            url = uri("https://jitpack.io")
+        }
+    }
+}
+
 android {
     namespace = "com.nakaharadev.roleworld"
     compileSdk = 34
@@ -26,10 +34,12 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
@@ -48,6 +58,9 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
+
+    // RxJava
+    compileOnly(libs.rxjava)
 
     // Preferences
     implementation(libs.androidx.preference)

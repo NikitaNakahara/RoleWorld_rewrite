@@ -5,8 +5,9 @@
 
     <color name="divider">#bbb</color>
 
-    <color name="transparent_character_block">#55000000</color>
+    <color name="transparent_character_block">#aa121212</color>
 
     <color name="main_text">#fff</color>
+    <color name="sub_main_text">#ccc</color>
     <color name="gray_text">#aaa</color>
 </resources>

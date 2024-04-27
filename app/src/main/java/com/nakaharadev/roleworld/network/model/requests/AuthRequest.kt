@@ -1,9 +1,11 @@
-package com.nakaharadev.roleworld.network.model
+package com.nakaharadev.roleworld.network.model.requests
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import com.nakaharadev.roleworld.network.model.AbstractRequest
+import com.nakaharadev.roleworld.network.model.AbstractResponse
 
-object AuthRequest {
+object AuthRequest{
     data class SignIn(
         @SerializedName("email")
         @Expose
@@ -12,7 +14,7 @@ object AuthRequest {
         @SerializedName("password")
         @Expose
         val password: String
-    )
+    ) : AbstractRequest()
 
     data class SignUp(
         @SerializedName("nickname")
@@ -26,5 +28,5 @@ object AuthRequest {
         @SerializedName("password")
         @Expose
         val password: String
-    )
+    ) : AbstractRequest()
 }

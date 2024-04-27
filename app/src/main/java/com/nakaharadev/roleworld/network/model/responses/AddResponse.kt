@@ -1,7 +1,8 @@
-package com.nakaharadev.roleworld.network.model
+package com.nakaharadev.roleworld.network.model.responses
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import com.nakaharadev.roleworld.network.model.AbstractResponse
 
 data class AddResponse(
     @SerializedName("status")
@@ -11,4 +12,4 @@ data class AddResponse(
     @SerializedName("id")
     @Expose
     val id: String
-)
+) : AbstractResponse()

@@ -7,7 +7,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.BitmapDrawable
@@ -33,31 +32,30 @@ import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
 import android.widget.ViewFlipper
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
+import com.nakaharadev.roleworld.controllers.CharacterDataController
 import com.nakaharadev.roleworld.controllers.InnerNotificationsController
 import com.nakaharadev.roleworld.controllers.MenuController
+import com.nakaharadev.roleworld.file_tasks.ReadCharactersFileTask
+import com.nakaharadev.roleworld.file_tasks.ReadImageFileTask
+import com.nakaharadev.roleworld.file_tasks.SaveImageFileTask
+import com.nakaharadev.roleworld.file_tasks.UpdateCharactersFileTask
 import com.nakaharadev.roleworld.models.Character
-import com.nakaharadev.roleworld.network.model.AddResponse
-import com.nakaharadev.roleworld.network.model.UpdateRequest
-import com.nakaharadev.roleworld.network.model.UpdateResponse
+import com.nakaharadev.roleworld.network.model.responses.AddResponse
+import com.nakaharadev.roleworld.network.model.responses.GetAvatarResponse
+import com.nakaharadev.roleworld.network.model.responses.GetCharactersResponse
+import com.nakaharadev.roleworld.network.tasks.GetAvatarTask
+import com.nakaharadev.roleworld.network.tasks.GetCharactersTask
+import com.nakaharadev.roleworld.network.tasks.SendNewCharacterTask
+import com.nakaharadev.roleworld.network.tasks.UpdateAvatarTask
+import com.nakaharadev.roleworld.network.tasks.UpdateCharacterAvatarTask
+import com.nakaharadev.roleworld.network.tasks.UpdateUserDataTask
+import com.nakaharadev.roleworld.services.FileManagerService
 import com.nakaharadev.roleworld.services.NetworkService
 import com.nakaharadev.roleworld.ui.AnimatedImageView
 import com.nakaharadev.roleworld.ui.CharacterLayout
 import com.nakaharadev.roleworld.ui.ImageClipperView
-import com.nakaharadev.roleworldserver.models.GetCharacterResponse
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.io.ByteArrayOutputStream
-import java.io.DataInputStream
-import java.io.DataOutputStream
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 
 class AppActivity : Activity() {
@@ -65,19 +63,18 @@ class AppActivity : Activity() {
     private val RESULT_GET_CHARACTER_AVATAR = 2
     private val RESULT_UPDATE_CHARACTER_AVATAR = 3
 
-    private var characterForUpdate: Character? = null
-    private var characterAvatarViewForUpdate: AnimatedImageView? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Converter.init(this)
 
+        initGlobalVariables()
+
         startService(Intent(this, NetworkService::class.java))
+        startService(Intent(this, FileManagerService::class.java))
 
         loadCharacters()
         syncCharacters()
-        loadAvatar()
         initMainView()
     }
 
@@ -109,6 +106,10 @@ class AppActivity : Activity() {
 
             updateCharacterAvatar(bitmap)
         }
+    }
+
+    private fun initGlobalVariables() {
+        GlobalVariablesContainer.add("cacheDir", cacheDir)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -249,13 +250,16 @@ class AppActivity : Activity() {
 
         findViewById<ImageView>(R.id.clipper_done_button).setOnClickListener {
             val clipped = clipper.getClipped()
+            val character = CharacterDataController.characterObj
 
-            if (characterForUpdate != null) {
-                characterForUpdate?.avatar = clipped
-            }
+            NetworkService.addTask(UpdateCharacterAvatarTask(clipped, character)) {
+                runOnUiThread {
+                    findViewById<AnimatedImageView>(R.id.character_data_avatar).setImageBitmap(clipped)
 
-            if (characterAvatarViewForUpdate != null) {
-                characterAvatarViewForUpdate?.setImageBitmap(clipped)
+                    InnerNotificationsController.showNotification(getString(R.string.done), InnerNotificationsController.DONE)
+
+                    FileManagerService.addTask(SaveImageFileTask("${filesDir.path}/${character.name}_avatar.png", clipped))
+                }
             }
 
             findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 2
@@ -265,57 +269,42 @@ class AppActivity : Activity() {
     }
 
     private fun loadAvatar() {
-        val file = File("${filesDir.path}/user_avatar.png")
-        if (file.exists()) {
-            val stream = FileInputStream(file)
-            val options = BitmapFactory.Options()
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888
-
-            UserData.roundedAvatar = BitmapFactory.decodeStream(stream, null, options)
+        FileManagerService.addReadTask(ReadImageFileTask("${filesDir.path}/user_avatar.png")) {
+            UserData.roundedAvatar = it as Bitmap
+            runOnUiThread {
+                findViewById<AnimatedImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar, false)
+                findViewById<AnimatedImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar, false)
+            }
         }
     }
 
     private fun loadCharacters() {
-        val file = File("${filesDir.path}/characters.json")
-        if (!file.exists()) return
+        FileManagerService.addReadTask(ReadCharactersFileTask(filesDir.path)) {
+            it as Character
 
-        val stream = DataInputStream(FileInputStream(file))
-        val jsonString = stream.readUTF()
-
-        val gson = GsonBuilder().create()
-        val array = gson.fromJson(jsonString, JsonArray::class.java)
-
-        for (elem: JsonElement in array) {
-            val character = Character()
-            val obj = elem.asJsonObject
-            character.id = obj["id"].asString
-            character.name = obj["name"].asString
-
-            val avatarFile = File("${filesDir.path}/${character.name}_avatar.png")
-            if (avatarFile.exists()) {
-                val inputStream = FileInputStream(avatarFile)
-                val options = BitmapFactory.Options()
-                options.inPreferredConfig = Bitmap.Config.ARGB_8888
-
-                character.avatar = BitmapFactory.decodeStream(inputStream, null, options)
+            runOnUiThread {
+                Toast.makeText(this, it.desc, Toast.LENGTH_SHORT).show()
             }
 
-            if (character.avatar == null) {
-                Toast.makeText(this, "null", Toast.LENGTH_SHORT).show()
+            UserData.characters[it.id] = it
+            UserData.charactersId.add(it.id)
+            runOnUiThread {
+                addCharacterToUI(it)
             }
-
-            UserData.characters[character.id] = character
-            UserData.charactersId.add(character.id)
         }
     }
 
     private fun syncCharacters() {
-        if (UserData.charactersId.isEmpty()) return
+        NetworkService.addTask(GetCharactersTask(UserData.id)) { getResponse ->
+            getResponse as GetCharactersResponse
 
-        val file = File("${filesDir.path}/characters.json")
+            val charactersList = ArrayList<String>()
+            for (elem in getResponse.characters.split(" ")) {
+                charactersList.add(elem)
+            }
 
-        val array = ArrayList<Character>()
-        Thread {
+            UserData.charactersId = charactersList
+
             for (id in UserData.charactersId) {
                 if (UserData.characters[id] == null) {
                     val response = App.networkApi.getCharacter(id).execute()
@@ -324,23 +313,23 @@ class AppActivity : Activity() {
                     character.id = id
                     character.name = response.body()?.name!!
 
-                    val avatarResponse = App.networkApi.getCharacterAvatar(id).execute()
-                    val stream = avatarResponse.body()?.byteStream()
-                    val options = BitmapFactory.Options()
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888
-                    val avatar = BitmapFactory.decodeStream(stream, null, options)
-                    character.avatar = avatar
+                    NetworkService.addTask(GetAvatarTask(id, GetAvatarTask.AVATAR_TYPE_CHARACTER)) {
+                        it as GetAvatarResponse
 
-                    array.add(character)
+                        character.avatar = it.avatar
+
+                        UserData.characters[character.id] = character
+
+                        FileManagerService.addTask(UpdateCharactersFileTask("${filesDir.path}/characters.json", character))
+                        FileManagerService.addTask(SaveImageFileTask("${filesDir.path}/${character.name}_avatar.png", character.avatar!!))
+
+                        runOnUiThread {
+                            addCharacterToUI(character)
+                        }
+                    }
                 }
             }
-
-            for (elem in array) {
-                UserData.characters[elem.id] = elem
-                saveCharacterToFile(elem, file)
-                saveCharacterAvatar(elem.avatar!!, elem.name)
-            }
-        }.start()
+        }
     }
 
     private fun initBg() {
@@ -391,6 +380,8 @@ class AppActivity : Activity() {
     private fun initMainView() {
         setContentView(R.layout.main_layout)
 
+        loadAvatar()
+
         val colors = HashMap<Int, Int>()
         colors[InnerNotificationsController.DONE] = getColor(R.color.green)
         colors[InnerNotificationsController.ERROR] = getColor(R.color.red)
@@ -405,10 +396,6 @@ class AppActivity : Activity() {
     }
 
     private fun initMenu() {
-        if (UserData.roundedAvatar != null) {
-            findViewById<AnimatedImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar, false)
-        }
-
         MenuController.setCallback(object: MenuController.MenuStateCallback() {
             override fun onBeforeChangeState(oldState: Int): HashMap<String, View>? {
                 val map = HashMap<String, View>()
@@ -467,10 +454,6 @@ class AppActivity : Activity() {
     }
 
     private fun loadProfile() {
-        if (UserData.roundedAvatar != null) {
-            findViewById<AnimatedImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar, false)
-        }
-
         findViewById<TextView>(R.id.profile_nickname).text = UserData.nickname
         findViewById<TextView>(R.id.profile_email).text = UserData.email
         val spannableStr = SpannableString(UserData.id)
@@ -520,40 +503,28 @@ class AppActivity : Activity() {
                     nicknameView.isFocusableInTouchMode = false
                     nicknameView.isClickable = false
 
-                    nicknameView.setBackgroundColor(resources.getColor(R.color.window_bg))
+                    nicknameView.setBackgroundColor(resources.getColor(R.color.transparent))
 
                     (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
                         .hideSoftInputFromWindow(nicknameView.windowToken, 0)
 
-                    App.networkApi.updateNickname(UserData.id, UpdateRequest(UserData.nickname)).enqueue(
-                        object : Callback<UpdateResponse> {
-                            override fun onResponse(
-                                call: Call<UpdateResponse>,
-                                response: Response<UpdateResponse>
-                            ) {
-                                val preferences = getSharedPreferences("user_data", Context.MODE_PRIVATE)
-                                val editor = preferences.edit()
-                                editor.putString("nickname", UserData.nickname)
-                                editor.apply()
+                    NetworkService.addTask(UpdateUserDataTask(
+                        UserData.id,
+                        UserData.nickname,
+                        UpdateUserDataTask.UPDATE_TYPE_NICKNAME
+                    )) {
+                        val preferences = getSharedPreferences("user_data", Context.MODE_PRIVATE)
+                        val editor = preferences.edit()
+                        editor.putString("nickname", UserData.nickname)
+                        editor.apply()
 
-                                runOnUiThread {
-                                    InnerNotificationsController.showNotification(
-                                        getString(R.string.done),
-                                        InnerNotificationsController.DONE
-                                    )
-                                }
-                            }
-
-                            override fun onFailure(call: Call<UpdateResponse>, t: Throwable) {
-                                runOnUiThread {
-                                    InnerNotificationsController.showNotification(
-                                        getString(R.string.cant_update_nickname),
-                                        InnerNotificationsController.ERROR
-                                    )
-                                }
-                            }
+                        runOnUiThread {
+                            InnerNotificationsController.showNotification(
+                                getString(R.string.done),
+                                InnerNotificationsController.DONE
+                            )
                         }
-                    )
+                    }
                 }
 
                 return@setOnEditorActionListener true
@@ -620,56 +591,24 @@ class AppActivity : Activity() {
                     character.name = v.text.toString()
                     character.avatar = (findViewById<ImageView>(R.id.character_avatar).drawable as BitmapDrawable).bitmap
 
-                    val cache = File("${cacheDir.path}/character_avatar")
-                    cache.createNewFile()
+                    NetworkService.addTask(SendNewCharacterTask(character)) {
+                        it as AddResponse
 
-                    val bos = ByteArrayOutputStream()
-                    character.avatar?.compress(Bitmap.CompressFormat.PNG, 0, bos)
-                    val data = bos.toByteArray()
+                        character.id = it.id
 
-                    val fos = FileOutputStream(cache)
-                    fos.write(data)
-                    fos.flush()
-                    fos.close()
+                        FileManagerService.addTask(UpdateCharactersFileTask("${filesDir.path}/characters.json", character))
+                        FileManagerService.addTask(SaveImageFileTask("${filesDir.path}/${character.name}_avatar.png", character.avatar!!))
+                        UserData.characters[character.id] = character
 
-                    val requestFile = cache.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("character_avatar", cache.name, requestFile)
-
-                    App.networkApi.addCharacter(UserData.id, character.name, body).enqueue(
-                        object : Callback<AddResponse> {
-                            override fun onResponse(
-                                call: Call<AddResponse>,
-                                response: Response<AddResponse>
-                            ) {
-                                character.id = response.body()?.id!!
-
-                                val charactersFile = File("${filesDir.path}/characters.json")
-                                saveCharacterToFile(character, charactersFile)
-
-
-                                saveCharacterAvatar(character.avatar!!, character.name)
-                                UserData.characters[character.id] = character
-
-                                runOnUiThread {
-                                    InnerNotificationsController.showNotification(
-                                        getString(R.string.done),
-                                        InnerNotificationsController.DONE
-                                    )
-                                    navBarFlipper.displayedChild = currentDisplayed
-                                    addCharacterToUI(character)
-                                }
-                            }
-
-                            override fun onFailure(call: Call<AddResponse>, t: Throwable) {
-                                runOnUiThread {
-                                    InnerNotificationsController.showNotification(
-                                        getString(R.string.error),
-                                        InnerNotificationsController.ERROR
-                                    )
-                                }
-                            }
+                        runOnUiThread {
+                            InnerNotificationsController.showNotification(
+                                getString(R.string.done),
+                                InnerNotificationsController.DONE
+                            )
+                            navBarFlipper.displayedChild = currentDisplayed
+                            addCharacterToUI(character)
                         }
-                    )
+                    }
                 }
 
                 return@setOnEditorActionListener true
@@ -712,44 +651,11 @@ class AppActivity : Activity() {
             findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
         }
 
-        findViewById<AnimatedImageView>(R.id.character_data_avatar).setImageBitmap(character.avatar!!, false)
-        findViewById<TextView>(R.id.character_data_name).text = character.name
-        findViewById<TextView>(R.id.character_data_id).text = character.id
-
-        initCharacterDataBg()
-
-        findViewById<AnimatedImageView>(R.id.character_data_avatar).setOnLongClickListener {
-            characterForUpdate = character
-            characterAvatarViewForUpdate = it as AnimatedImageView
-
+        CharacterDataController.init(this, findViewById(R.id.character_data_layout), character, this::runOnUiThread) { view, c ->
             val intent = Intent(Intent.ACTION_GET_CONTENT)
             intent.type = "image/*"
             startActivityForResult(intent, RESULT_UPDATE_CHARACTER_AVATAR)
-
-            return@setOnLongClickListener true
         }
-    }
-
-    private fun initCharacterDataBg() {
-        val view = findViewById<VideoView>(R.id.character_data_bg)
-
-        view.setOnPreparedListener { mediaPlayer ->
-            val videoRatio = mediaPlayer.videoWidth / mediaPlayer.videoHeight.toFloat()
-            val screenRatio = view.width / view.height.toFloat()
-            val scaleX = videoRatio / screenRatio
-            if (scaleX >= 1f) {
-                view.scaleX = scaleX
-            } else {
-                view.scaleY = 1f / scaleX
-            }
-        }
-
-        val uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.auth_bg)
-        view.setVideoURI(uri)
-        view.setOnCompletionListener {
-            view.start()
-        }
-        view.start()
     }
 
     private fun loadSettings() {
@@ -770,102 +676,25 @@ class AppActivity : Activity() {
         }.start()
     }
 
-    private fun saveCharacterToFile(character: Character, file: File) {
-        if (!file.exists()) {
-            file.createNewFile()
-
-            val array = JsonArray()
-
-            val gson = GsonBuilder().create()
-            array.add(gson.toJsonTree(character.toSerializable()))
-
-            val json = gson.toJson(array)
-
-            val stream = DataOutputStream(FileOutputStream(file))
-            stream.writeUTF(json)
-            stream.flush()
-            stream.close()
-        } else {
-            val stream = DataInputStream(FileInputStream(file))
-            var json = stream.readUTF()
-            stream.close()
-
-            val gson = GsonBuilder().create()
-            val array = gson.fromJson(json, JsonArray::class.java)
-            array.add(gson.toJsonTree(character.toSerializable()))
-
-            json = gson.toJson(array)
-
-            val outputStream = DataOutputStream(FileOutputStream(file))
-            outputStream.writeUTF(json)
-            outputStream.flush()
-            outputStream.close()
-        }
-    }
-
-    private fun saveCharacterAvatar(avatar: Bitmap, name: String) {
-        Thread {
-            val fos = FileOutputStream("${filesDir.path}/${name}_avatar.png")
-            val bos = ByteArrayOutputStream()
-            avatar.compress(Bitmap.CompressFormat.PNG, 0, bos)
-            val data = bos.toByteArray()
-            bos.close()
-
-            fos.write(data)
-            fos.flush()
-            fos.close()
-        }.start()
-    }
-
     private fun updateAvatar(bitmap: Bitmap) {
-        val cache = File("${cacheDir.path}/avatar")
-        cache.createNewFile()
-
-        val bos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 0, bos)
-        val data = bos.toByteArray()
-
-        val fos = FileOutputStream(cache)
-        fos.write(data)
-        fos.flush()
-        fos.close()
-
-        val requestFile = cache.asRequestBody("image/*".toMediaTypeOrNull())
-        val body = MultipartBody.Part.createFormData("avatar", cache.name, requestFile)
-
-        val response = App.networkApi.updateAvatar(UserData.id, body)
-        response.enqueue(object : Callback<UpdateResponse> {
-            override fun onResponse(
-                call: Call<UpdateResponse>,
-                response: Response<UpdateResponse>
-            ) {
-                runOnUiThread {
-                    val loadBar = findViewById<ImageView>(R.id.load_avatar_bar)
-                    if (loadBar.drawable is Animatable) {
-                        (loadBar.drawable as AnimatedVectorDrawable).stop()
-                    }
-                    loadBar.visibility = View.GONE
-
-                    findViewById<ImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar)
-                    findViewById<ImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar)
-
-                    saveAvatar(UserData.roundedAvatar!!)
-
-                    InnerNotificationsController.showNotification(
-                        getString(R.string.done),
-                        InnerNotificationsController.DONE
-                    )
+        NetworkService.addTask(UpdateAvatarTask(bitmap)) {
+            runOnUiThread {
+                val loadBar = findViewById<ImageView>(R.id.load_avatar_bar)
+                if (loadBar.drawable is Animatable) {
+                    (loadBar.drawable as AnimatedVectorDrawable).stop()
                 }
-            }
+                loadBar.visibility = View.GONE
 
-            override fun onFailure(call: Call<UpdateResponse>, t: Throwable) {
-                runOnUiThread {
-                    InnerNotificationsController.showNotification(
-                        getString(R.string.cant_update_avatar),
-                        InnerNotificationsController.ERROR
-                    )
-                }
+                findViewById<ImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar)
+                findViewById<ImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar)
+
+                saveAvatar(UserData.roundedAvatar!!)
+
+                InnerNotificationsController.showNotification(
+                    getString(R.string.done),
+                    InnerNotificationsController.DONE
+                )
             }
-        })
+        }
     }
 }

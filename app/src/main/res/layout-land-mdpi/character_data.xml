@@ -67,48 +67,49 @@
                     android:singleLine="true"/>
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="10dp"
-        android:background="@drawable/character_data_block"
-        android:gravity="center"
-        android:orientation="vertical">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sex"
-            android:textColor="@color/main_text"
-            android:textSize="20sp"
-            android:textFontWeight="700"
-            android:layout_marginBottom="2dp"/>
         <LinearLayout
-            android:layout_width="110dp"
-            android:layout_height="30dp"
-            android:layout_marginTop="5dp">
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:id="@+id/character_sex_man"
-                android:src="@drawable/male_sex_icon"
-                android:tint="@color/gray_text"/>
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="10dp"
-                android:id="@+id/character_sex_hermaphrodite"
-                android:src="@drawable/hermaphrodite_sex_icon"
-                android:tint="@color/gray_text"/>
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:id="@+id/character_sex_woman"
-                android:src="@drawable/female_sex_icon"
-                android:tint="@color/gray_text"/>
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingVertical="10dp"
+            android:background="@drawable/character_data_block"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sex"
+                android:textColor="@color/main_text"
+                android:textSize="20sp"
+                android:textFontWeight="700"
+                android:layout_marginBottom="2dp"/>
+            <LinearLayout
+                android:layout_width="110dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="5dp">
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:id="@+id/character_sex_man"
+                    android:src="@drawable/male_sex_icon"
+                    android:tint="@color/gray_text"/>
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="10dp"
+                    android:id="@+id/character_sex_hermaphrodite"
+                    android:src="@drawable/hermaphrodite_sex_icon"
+                    android:tint="@color/gray_text"/>
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:id="@+id/character_sex_woman"
+                    android:src="@drawable/female_sex_icon"
+                    android:tint="@color/gray_text"/>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
     <LinearLayout
@@ -118,10 +119,10 @@
         android:showDividers="middle"
         android:divider="@color/divider"
         android:dividerPadding="10dp"
-        android:orientation="vertical">
+        android:orientation="horizontal">
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:minHeight="200dp"
             android:layout_marginTop="10dp"
@@ -162,7 +163,7 @@
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:minHeight="200dp"
             android:layout_marginTop="10dp"

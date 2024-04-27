@@ -4,12 +4,12 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import com.nakaharadev.roleworld.network.model.AbstractResponse
-import com.nakaharadev.roleworld.network.tasks.AbstractTask
+import com.nakaharadev.roleworld.file_tasks.AbstractFileTask
+import com.nakaharadev.roleworld.file_tasks.AbstractReadFileTask
+import java.io.File
 import java.util.LinkedList
 
-class NetworkService : Service() {
-    private var stopPingLoop = true
+class FileManagerService : Service() {
     private var stopTasksLoop = true
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -17,14 +17,12 @@ class NetworkService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startPingLoop()
         startTasksLoop()
 
         return START_STICKY
     }
 
     override fun onDestroy() {
-        stopPingLoop = true
         stopTasksLoop = true
     }
 
@@ -36,34 +34,26 @@ class NetworkService : Service() {
         Thread {
             while (!stopTasksLoop) {
                 while (!tasks.isEmpty()) {
-                    try {
-                        tasks.poll()?.task()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                    val task = tasks.poll()
+                    if (task?.taskType == "read") {
+                        task as AbstractReadFileTask
+                        Log.i("FileManagerService", "Read: ${task.read()}")
+                    } else if (task?.taskType == "save") {
+                        Log.i("FileManagerService", "Save: ${task.save()}")
                     }
                 }
             }
         }.start()
     }
 
-    private fun startPingLoop() {
-        if (stopPingLoop) {
-            stopPingLoop = false
-        } else return
-
-        Thread {
-            while (!stopPingLoop) {
-
-
-                Thread.sleep(5000)
-            }
-        }.start()
-    }
-
     companion object {
-        private val tasks = LinkedList<AbstractTask>()
+        private val tasks = LinkedList<AbstractFileTask>()
 
-        fun addTask(task: AbstractTask, callback: (AbstractResponse) -> Unit) {
+        fun addTask(task: AbstractFileTask) {
+            tasks.add(task)
+        }
+
+        fun addReadTask(task: AbstractReadFileTask, callback: (Any?) -> Unit) {
             task.callback = callback
             tasks.add(task)
         }

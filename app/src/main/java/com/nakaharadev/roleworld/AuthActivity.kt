@@ -17,10 +17,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.VideoView
 import com.nakaharadev.roleworld.animators.AuthAnimator
-import com.nakaharadev.roleworld.controllers.MenuController
-import com.nakaharadev.roleworld.network.model.AuthRequest
-import com.nakaharadev.roleworld.network.model.AuthResponse
-import com.nakaharadev.roleworldserver.models.GetCharacterResponse
+import com.nakaharadev.roleworld.file_tasks.SaveImageFileTask
+import com.nakaharadev.roleworld.network.model.requests.AuthRequest
+import com.nakaharadev.roleworld.network.model.responses.AuthResponse
+import com.nakaharadev.roleworld.network.model.responses.GetAvatarResponse
+import com.nakaharadev.roleworld.network.tasks.AuthTask
+import com.nakaharadev.roleworld.network.tasks.GetAvatarTask
+import com.nakaharadev.roleworld.services.FileManagerService
+import com.nakaharadev.roleworld.services.NetworkService
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -36,6 +40,9 @@ class AuthActivity : Activity() {
         setContentView(R.layout.auth_layout)
 
         Converter.init(this)
+
+        startService(Intent(this, NetworkService::class.java))
+        startService(Intent(this, FileManagerService::class.java))
 
         initAuthChooser()
         initSignIn()
@@ -106,7 +113,7 @@ class AuthActivity : Activity() {
     }
 
     private fun initSignIn() {
-        findViewById<EditText>(R.id.sign_in_password).setOnEditorActionListener { _, actionId, _ ->
+        findViewById<EditText>(R.id.sign_in_password).setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 findViewById<LinearLayout>(R.id.auth_load_indicator).visibility = View.VISIBLE
                 val loadBar = findViewById<ImageView>(R.id.auth_load_bar)
@@ -116,48 +123,44 @@ class AuthActivity : Activity() {
 
                 val request = AuthRequest.SignIn(
                     findViewById<EditText>(R.id.sign_in_email).text.toString(),
-                    findViewById<EditText>(R.id.sign_in_password).text.toString()
+                    v.text.toString()
                 )
-                App.networkApi.signIn(request).enqueue(object: Callback<AuthResponse> {
-                    override fun onResponse(
-                        call: Call<AuthResponse>,
-                        response: Response<AuthResponse>
-                    ) {
-                        if (response.body()?.status == 404) {
-                            AuthAnimator.showErrorMessage(
-                                resources.getString(R.string.user_not_found),
-                                resources.getDrawable(R.drawable.error_bg),
-                                findViewById(R.id.sign_in_error),
-                                listOf(findViewById(R.id.sign_in_email))
-                            )
-                        } else if (response.body()?.status == 506) {
-                            AuthAnimator.showErrorMessage(
-                                resources.getString(R.string.invalid_password),
-                                resources.getDrawable(R.drawable.error_bg),
-                                findViewById(R.id.sign_in_error),
-                                listOf(findViewById(R.id.sign_in_password))
-                            )
-                        } else if (response.body()?.status == 200) {
-                            UserData.id = response.body()?.userId.toString()
-                            UserData.nickname = response.body()?.nickname.toString()
-                            UserData.password = findViewById<EditText>(R.id.sign_in_password).text.toString()
-                            UserData.email = findViewById<EditText>(R.id.sign_in_email).text.toString()
 
-                            val charactersList = ArrayList<String>()
-                            for (elem in response.body()?.characters?.split(" ")!!) {
-                                charactersList.add(elem)
-                            }
-                            UserData.charactersId = charactersList
+                NetworkService.addTask(AuthTask(AuthTask.SIGN_IN_MODE, request)) {
+                    it as AuthResponse
 
-                            loadUserAvatar()
+                    if (it.status == 404) {
+                        AuthAnimator.showErrorMessage(
+                            resources.getString(R.string.user_not_found),
+                            resources.getDrawable(R.drawable.error_bg),
+                            findViewById(R.id.sign_in_error),
+                            listOf(findViewById(R.id.sign_in_email))
+                        )
+                    } else if (it.status == 506) {
+                        AuthAnimator.showErrorMessage(
+                            resources.getString(R.string.invalid_password),
+                            resources.getDrawable(R.drawable.error_bg),
+                            findViewById(R.id.sign_in_error),
+                            listOf(findViewById(R.id.sign_in_password))
+                        )
+                    } else if (it.status == 200) {
+                        UserData.id = it.userId
+
+                        if (it.showId.isEmpty()) {
+                            UserData.showId = it.showId
+                        } else {
+                            UserData.showId = UserData.id
                         }
-                    }
 
-                    override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
-                        t.printStackTrace()
+                        UserData.nickname = it.nickname
+                        UserData.password = findViewById<EditText>(R.id.sign_in_password).text.toString()
+                        UserData.email = findViewById<EditText>(R.id.sign_in_email).text.toString()
+
+                        loadUserAvatar()
                     }
-                })
+                }
             }
+
             return@setOnEditorActionListener true
         }
     }
@@ -202,71 +205,42 @@ class AuthActivity : Activity() {
                     UserData.password
                 )
 
-                App.networkApi.signUp(request).enqueue(object: Callback<AuthResponse> {
-                    override fun onResponse(
-                        call: Call<AuthResponse>,
-                        response: Response<AuthResponse>
-                    ) {
-                        if (response.body()?.status == 506) {
-                            runOnUiThread {
-                                AuthAnimator.showErrorMessage(
-                                    resources.getText(R.string.user_already_exists).toString(),
-                                    resources.getDrawable(R.drawable.error_bg),
-                                    findViewById(R.id.sign_up_error),
-                                    listOf(findViewById(R.id.sign_up_email))
-                                )
-                            }
-                        } else {
-                            UserData.id = response.body()?.userId.toString()
+                NetworkService.addTask(AuthTask(AuthTask.SIGN_IN_MODE, request)) {
+                    it as AuthResponse
 
-                            runOnUiThread { finishAuth() }
+                    if (it.status == 506) {
+                        runOnUiThread {
+                            AuthAnimator.showErrorMessage(
+                                resources.getText(R.string.user_already_exists).toString(),
+                                resources.getDrawable(R.drawable.error_bg),
+                                findViewById(R.id.sign_up_error),
+                                listOf(findViewById(R.id.sign_up_email))
+                            )
                         }
-                    }
+                    } else {
+                        UserData.id = it.userId
+                        UserData.showId = it.userId
 
-                    override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
-                        t.printStackTrace()
+                        runOnUiThread { finishAuth() }
                     }
-
-                })
+                }
             }
             return@setOnEditorActionListener true
         }
     }
 
     private fun loadUserAvatar() {
-        App.networkApi.getAvatar(UserData.id).enqueue(object : Callback<ResponseBody> {
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-               val stream = response.body()?.byteStream()
+        NetworkService.addTask(GetAvatarTask(UserData.id, GetAvatarTask.AVATAR_TYPE_USER)) {
+            it as GetAvatarResponse
 
-                val options = BitmapFactory.Options()
-                options.inPreferredConfig = Bitmap.Config.ARGB_8888
+            UserData.roundedAvatar = it.avatar
 
-                UserData.roundedAvatar = BitmapFactory.decodeStream(stream, null, options)
-
-                saveAvatarToFile()
-            }
-
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {}
-
-        })
+            saveAvatarToFile()
+        }
     }
 
     private fun saveAvatarToFile() {
-        Thread {
-            val fos = FileOutputStream("${filesDir.path}/user_avatar.png")
-            val bos = ByteArrayOutputStream()
-            UserData.roundedAvatar?.compress(Bitmap.CompressFormat.PNG, 0, bos)
-            val data = bos.toByteArray()
-            bos.close()
-
-            fos.write(data)
-            fos.flush()
-            fos.close()
-
-            runOnUiThread {
-                finishAuth()
-            }
-        }.start()
+        FileManagerService.addTask(SaveImageFileTask("${filesDir.path}/user_avatar.png", UserData.roundedAvatar!!))
     }
 
     private fun finishAuth() {

@@ -29,5 +29,6 @@ class LauncherActivity : Activity() {
         UserData.nickname = preferences.getString("nickname", "").toString()
         UserData.email = preferences.getString("email", "").toString()
         UserData.password = preferences.getString("password", "").toString()
+        UserData.showId = preferences.getString("show_id", "").toString()
     }
 }

@@ -1,7 +1,12 @@
 package com.nakaharadev.roleworld.network
 
-import com.nakaharadev.roleworld.network.model.*
-import com.nakaharadev.roleworldserver.models.GetCharacterResponse
+import com.nakaharadev.roleworld.network.model.requests.AuthRequest
+import com.nakaharadev.roleworld.network.model.requests.UpdateRequest
+import com.nakaharadev.roleworld.network.model.responses.AddResponse
+import com.nakaharadev.roleworld.network.model.responses.AuthResponse
+import com.nakaharadev.roleworld.network.model.responses.UpdateResponse
+import com.nakaharadev.roleworld.network.model.responses.GetCharacterResponse
+import com.nakaharadev.roleworld.network.model.responses.GetCharactersResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -30,12 +35,22 @@ interface NetworkApi {
     @POST("update_user/{user_id}/nickname")
     fun updateNickname(@Path("user_id") id: String, @Body body: UpdateRequest): Call<UpdateResponse>
 
+    @POST("update_character/{id}/{data_type}")
+    fun updateCharacterData(@Path("id") id: String, @Path("data_type") dataType: String, @Body body: UpdateRequest): Call<UpdateResponse>
+
     @GET("get_user_data/{user_id}/avatar")
     fun getAvatar(@Path("user_id") id: String): Call<ResponseBody>
+
+    @GET("get_user_data/{user_id}/characters")
+    fun getCharacters(@Path("user_id") id: String): Call<GetCharactersResponse>
 
     @GET("get_character/{id}")
     fun getCharacter(@Path("id") id: String): Call<GetCharacterResponse>
 
     @GET("get_character/avatar/{id}")
     fun getCharacterAvatar(@Path("id") id: String): Call<ResponseBody>
+
+    @Multipart
+    @POST("update_character/{id}/avatar")
+    fun updateCharacterAvatar(@Path("id") id: String, @Part file: MultipartBody.Part): Call<UpdateResponse>
 }
