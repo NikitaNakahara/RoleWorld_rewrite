@@ -29,9 +29,9 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import android.widget.Toast
 import android.widget.VideoView
 import android.widget.ViewFlipper
+import androidx.annotation.IdRes
 import com.nakaharadev.roleworld.controllers.CharacterDataController
 import com.nakaharadev.roleworld.controllers.InnerNotificationsController
 import com.nakaharadev.roleworld.controllers.MenuController
@@ -39,13 +39,24 @@ import com.nakaharadev.roleworld.file_tasks.ReadCharactersFileTask
 import com.nakaharadev.roleworld.file_tasks.ReadImageFileTask
 import com.nakaharadev.roleworld.file_tasks.SaveImageFileTask
 import com.nakaharadev.roleworld.file_tasks.UpdateCharactersFileTask
+import com.nakaharadev.roleworld.file_tasks.UpdateFriendsFileTask
 import com.nakaharadev.roleworld.models.Character
+import com.nakaharadev.roleworld.models.Friend
+import com.nakaharadev.roleworld.models.OtherUser
+import com.nakaharadev.roleworld.network.model.requests.ValueRequest
 import com.nakaharadev.roleworld.network.model.responses.AddResponse
 import com.nakaharadev.roleworld.network.model.responses.GetAvatarResponse
+import com.nakaharadev.roleworld.network.model.responses.GetCharacterResponse
 import com.nakaharadev.roleworld.network.model.responses.GetCharactersResponse
+import com.nakaharadev.roleworld.network.model.responses.GetUserResponse
+import com.nakaharadev.roleworld.network.tasks.GetUserTask
+import com.nakaharadev.roleworld.network.model.responses.SearchResponse
 import com.nakaharadev.roleworld.network.model.responses.UpdateResponse
+import com.nakaharadev.roleworld.network.tasks.AddToFriendsTask
 import com.nakaharadev.roleworld.network.tasks.GetAvatarTask
+import com.nakaharadev.roleworld.network.tasks.GetCharacterTask
 import com.nakaharadev.roleworld.network.tasks.GetCharactersTask
+import com.nakaharadev.roleworld.network.tasks.SearchTask
 import com.nakaharadev.roleworld.network.tasks.SendNewCharacterTask
 import com.nakaharadev.roleworld.network.tasks.UpdateAvatarTask
 import com.nakaharadev.roleworld.network.tasks.UpdateCharacterAvatarTask
@@ -54,7 +65,10 @@ import com.nakaharadev.roleworld.services.FileManagerService
 import com.nakaharadev.roleworld.services.NetworkService
 import com.nakaharadev.roleworld.ui.AnimatedImageView
 import com.nakaharadev.roleworld.ui.CharacterLayout
+import com.nakaharadev.roleworld.ui.FriendLayout
 import com.nakaharadev.roleworld.ui.ImageClipperView
+import com.nakaharadev.roleworld.ui.SearchUserLayout
+import okhttp3.internal.http.HttpMethod
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -271,7 +285,9 @@ class AppActivity : Activity() {
 
     private fun loadAvatar() {
         FileManagerService.addReadTask(ReadImageFileTask("${filesDir.path}/user_avatar.png")) {
-            UserData.roundedAvatar = it as Bitmap
+            it as Bitmap? ?: return@addReadTask
+
+            UserData.roundedAvatar = it
             runOnUiThread {
                 findViewById<AnimatedImageView>(R.id.open_profile).setImageBitmap(UserData.roundedAvatar, false)
                 findViewById<AnimatedImageView>(R.id.profile_avatar).setImageBitmap(UserData.roundedAvatar, false)
@@ -304,11 +320,14 @@ class AppActivity : Activity() {
 
             for (id in UserData.charactersId) {
                 if (UserData.characters[id] == null) {
-                    val response = App.networkApi.getCharacter(id).execute()
+                    val response = App.networkApi.getCharacter(id).execute().body()!!
 
                     val character = Character()
                     character.id = id
-                    character.name = response.body()?.name!!
+                    character.name = response.name
+                    character.sex = response.sex
+                    character.desc = response.desc
+                    character.bio = response.bio
 
                     NetworkService.addTask(GetAvatarTask(id, GetAvatarTask.AVATAR_TYPE_CHARACTER)) {
                         it as GetAvatarResponse
@@ -386,7 +405,8 @@ class AppActivity : Activity() {
         InnerNotificationsController.init(this, findViewById(R.id.inner_notification_view), colors)
 
         for (id: String in UserData.charactersId) {
-            addCharacterToUI(UserData.characters[id]!!)
+            val character = UserData.characters[id] ?: continue
+            addCharacterToUI(character)
         }
 
         loadChats(isInit = true)
@@ -598,6 +618,8 @@ class AppActivity : Activity() {
                     findViewById<TextView>(R.id.profile_id).text = spannableStr
 
                     UserData.showId = value
+
+                    InnerNotificationsController.showNotification(getString(R.string.done), InnerNotificationsController.DONE)
                 }
             }
         }
@@ -607,7 +629,7 @@ class AppActivity : Activity() {
         val flipper = findViewById<ViewFlipper>(R.id.navbar_flipper)
         val currentDisplayedChild = flipper.displayedChild
 
-        flipper.displayedChild = flipper.childCount - 1
+        flipper.displayedChild = 2
 
         findViewById<ImageView>(R.id.navbar_account_exit_ok).setOnClickListener {
             val preferences = getSharedPreferences("user_data", Context.MODE_PRIVATE)
@@ -637,20 +659,205 @@ class AppActivity : Activity() {
     }
 
     private fun loadChats(isInit: Boolean = false) {
-        if (!isInit)
+        if (!isInit) {
             findViewById<ViewFlipper>(R.id.main_flipper).displayedChild = 0
+        }
 
         findViewById<ImageView>(R.id.new_chat).setOnClickListener {
-            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 3
+            newChat()
+        }
+    }
 
-            findViewById<ImageView>(R.id.close_new_chat).setOnClickListener {
-                findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
-            }
+    private fun newChat() {
+        findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 3
 
-            findViewById<ImageView>(R.id.new_chat_search).setOnClickListener {
+        findViewById<LinearLayout>(R.id.new_chat_friends_list).removeAllViews()
 
+        findViewById<ImageView>(R.id.close_new_chat).setOnClickListener {
+            findViewById<ViewFlipper>(R.id.clipper_flipper).displayedChild = 0
+        }
+
+        findViewById<ImageView>(R.id.new_chat_search).setOnClickListener {
+            val value = findViewById<EditText>(R.id.new_chat_search_input).text.toString()
+
+            findViewById<LinearLayout>(R.id.new_chat_friends_list).removeAllViews()
+
+            val inflater = LayoutInflater.from(this)
+            val view = inflater.inflate(R.layout.search_indicator, null) as LinearLayout
+            findViewById<LinearLayout>(R.id.new_chat_friends_list).addView(view)
+
+            (findViewById<ImageView>(R.id.new_chat_search_load_indicator_loadbar)
+                .drawable as AnimatedVectorDrawable).start()
+
+            NetworkService.addTask(SearchTask(ValueRequest(value))) {
+                it as SearchResponse
+
+                val users = it.users
+                if (users.isEmpty()) {
+                    runOnUiThread {
+                        findViewById<LinearLayout>(R.id.new_chat_friends_list).removeAllViews()
+                    }
+
+                    return@addTask
+                }
+
+                for (id in users) {
+                    NetworkService.addTask(GetUserTask(id)) { response ->
+                        response as GetUserResponse
+
+                        if (response.avatar.isNotEmpty()) {
+                            NetworkService.addTask(GetAvatarTask(id, GetAvatarTask.AVATAR_TYPE_USER)) { avatar ->
+                                avatar as GetAvatarResponse
+
+                                val user = OtherUser(
+                                    id,
+                                    response.showId,
+                                    response.nickname,
+                                    avatar.avatar,
+                                    response.characters
+                                )
+
+                                runOnUiThread {
+                                    addUserToSearchList(user)
+                                }
+                            }
+                        } else {
+                            val user = OtherUser(
+                                id,
+                                response.showId,
+                                response.nickname,
+                                null,
+                                response.characters
+                            )
+
+                            runOnUiThread {
+                                addUserToSearchList(user)
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private fun addUserToSearchList(user: OtherUser) {
+        val list = findViewById<LinearLayout>(R.id.new_chat_friends_list)
+        list.removeView(findViewById(R.id.new_chat_search_load_indicator))
+
+        val inflater = LayoutInflater.from(this)
+        val view = inflater.inflate(R.layout.search_user_layout, null) as SearchUserLayout
+        view.setUserData(user)
+        view.setOnClickListener {
+            showUserData(user)
+        }
+        view.findViewById<ImageView>(R.id.search_user_avatar).setImageBitmap(user.avatar)
+        view.findViewById<TextView>(R.id.search_user_name).text = user.nickname
+
+        list.addView(view)
+    }
+
+    private fun showUserData(user: OtherUser) {
+        findViewById<ViewFlipper>(R.id.new_chats_list_flipper).displayedChild = 1
+
+        findViewById<ImageView>(R.id.close_user_data).setOnClickListener {
+            findViewById<ViewFlipper>(R.id.new_chats_list_flipper).displayedChild = 0
+        }
+
+        if (user.avatar != null)
+            findViewById<ImageView>(R.id.user_data_avatar).setImageBitmap(user.avatar)
+
+        findViewById<TextView>(R.id.add_to_friends).setOnClickListener {
+            addToFriends(user)
+        }
+
+        findViewById<TextView>(R.id.user_data_nickname).text = user.nickname
+        findViewById<TextView>(R.id.user_data_id).text = user.showId.ifEmpty { user.id }
+
+        if (user.characters.isNotEmpty()) {
+            val list = findViewById<LinearLayout>(R.id.user_data_characters_list)
+            list.removeAllViews()
+
+            val inflater = LayoutInflater.from(this)
+            val view = inflater.inflate(R.layout.load_characters_indicator, null) as LinearLayout
+            list.addView(view)
+
+            (findViewById<ImageView>(R.id.load_characters_indicator_loadbar)
+                .drawable as AnimatedVectorDrawable).start()
+
+            for (id in user.characters.split(" ")) {
+                NetworkService.addTask(GetCharacterTask(id)) {
+                    it as GetCharacterResponse
+
+                    val character = Character()
+                    character.id = id
+                    character.name = it.name
+                    character.sex = it.sex
+                    character.desc = it.desc
+                    character.bio = it.bio
+
+                    NetworkService.addTask(GetAvatarTask(id, GetAvatarTask.AVATAR_TYPE_CHARACTER)) { avatarResponse ->
+                        avatarResponse as GetAvatarResponse
+
+                        character.avatar = avatarResponse.avatar
+
+                        runOnUiThread {
+                            addCharacterToList(findViewById(R.id.user_data_characters_list), character, R.id.load_characters_indicator, null)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun addToFriends(user: OtherUser) {
+        NetworkService.addTask(AddToFriendsTask(UserData.id, user.id)) {
+            val friend = Friend(user, true)
+            UserData.friends.add(friend)
+
+            FileManagerService.addTask(UpdateFriendsFileTask("${filesDir.path}/friends.json", friend, UpdateFriendsFileTask.UPDATE_MODE_ADD))
+            if (user.avatar != null)
+                FileManagerService.addTask(SaveImageFileTask("${filesDir.path}/${user.id}.png", user.avatar))
+
+            runOnUiThread {
+                addFriendToList(Friend(user, true))
+            }
+        }
+    }
+
+    private fun addFriendToList(friend: Friend) {
+        val list = findViewById<LinearLayout>(R.id.profile_friends_list)
+
+        val view = LayoutInflater.from(this).inflate(R.layout.friend, null) as FriendLayout
+        view.setFriend(friend)
+        view.findViewById<ImageView>(R.id.friend_avatar).setImageBitmap(friend.user.avatar)
+        view.findViewById<TextView>(R.id.friend_name).text = friend.user.nickname
+
+        view.setOnClickListener {
+
+        }
+
+        list.addView(view)
+    }
+
+    private fun getCharacterView(): CharacterLayout {
+        return LayoutInflater.from(this).inflate(R.layout.character_view, null) as CharacterLayout
+    }
+
+    private fun addCharacterToList(list: LinearLayout, character: Character, @IdRes emptyViewId: Int, callback: (() -> Unit)?) {
+        list.removeView(findViewById(emptyViewId))
+
+        val view = getCharacterView()
+
+        view.setCharacterId(character.id)
+        if (callback != null) {
+            view.setOnClickListener {
+                callback()
+            }
+        }
+        view.findViewById<ImageView>(R.id.character_avatar).setImageBitmap(character.avatar)
+        view.findViewById<TextView>(R.id.character_name).text = character.name
+
+        list.addView(view)
     }
 
     private fun loadCharactersView() {
@@ -659,9 +866,9 @@ class AppActivity : Activity() {
         findViewById<ImageView>(R.id.new_character).setOnClickListener {
             val navBarFlipper = findViewById<ViewFlipper>(R.id.navbar_flipper)
             val currentDisplayed = navBarFlipper.displayedChild
-            navBarFlipper.displayedChild = navBarFlipper.childCount - 2
+            navBarFlipper.displayedChild = 1
 
-            findViewById<AnimatedImageView>(R.id.character_avatar).setOnClickListener {
+            findViewById<AnimatedImageView>(R.id.navbar_character_avatar).setOnClickListener {
                 val intent = Intent(Intent.ACTION_GET_CONTENT)
                 intent.type = "image/*"
                 startActivityForResult(intent, RESULT_GET_CHARACTER_AVATAR)
@@ -702,28 +909,13 @@ class AppActivity : Activity() {
         val list = findViewById<LinearLayout>(R.id.characters_list)
         val profileList = findViewById<LinearLayout>(R.id.profile_characters_list)
 
-        list.removeView(findViewById(R.id.characters_list_empty))
-        profileList.removeView(findViewById(R.id.profile_characters_list_empty))
-
-        val inflater = LayoutInflater.from(this)
-        val view = inflater.inflate(R.layout.character_view, null) as CharacterLayout
-        view.setCharacterId(character.id)
-        view.setOnClickListener {
+        addCharacterToList(list, character, R.id.characters_list_empty) {
             openCharacterData(character)
         }
-        view.findViewById<ImageView>(R.id.character_avatar).setImageBitmap(character.avatar)
-        view.findViewById<TextView>(R.id.character_name).text = character.name
 
-        val profileView = inflater.inflate(R.layout.character_view, null) as CharacterLayout
-        profileView.setCharacterId(character.id)
-        profileView.setOnClickListener {
+        addCharacterToList(profileList, character, R.id.profile_characters_list_empty) {
             openCharacterData(character)
         }
-        profileView.findViewById<ImageView>(R.id.character_avatar).setImageBitmap(character.avatar)
-        profileView.findViewById<TextView>(R.id.character_name).text = character.name
-
-        list.addView(view)
-        profileList.addView(profileView)
     }
 
     private fun openCharacterData(character: Character) {

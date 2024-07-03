@@ -73,7 +73,7 @@
                                android:layout_height="50dp"
                                android:src="@drawable/open_profile_icon"
                                android:layout_marginEnd="20dp"
-                               android:id="@+id/character_avatar"/>
+                               android:id="@+id/navbar_character_avatar"/>
                            <EditText
                                android:layout_width="0dp"
                                android:layout_height="wrap_content"

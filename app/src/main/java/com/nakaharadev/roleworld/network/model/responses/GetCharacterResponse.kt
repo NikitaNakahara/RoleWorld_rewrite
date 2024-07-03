@@ -16,4 +16,16 @@ data class GetCharacterResponse(
     @SerializedName("name")
     @Expose
     val name: String,
+
+    @SerializedName("sex")
+    @Expose
+    val sex: String,
+
+    @SerializedName("desc")
+    @Expose
+    val desc: String,
+
+    @SerializedName("bio")
+    @Expose
+    val bio: String
 ) : AbstractResponse()

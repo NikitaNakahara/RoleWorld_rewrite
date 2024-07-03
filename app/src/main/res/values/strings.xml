@@ -33,4 +33,7 @@
     <string name="go_original">go original</string>
     <string name="id_already_exists">id already exists</string>
     <string name="search">search</string>
+    <string name="add_to_friends">add to friends</string>
+    <string name="data_layout_id_prefix" translatable="false">id: </string>
+    <string name="characters">characters</string>
 </resources>

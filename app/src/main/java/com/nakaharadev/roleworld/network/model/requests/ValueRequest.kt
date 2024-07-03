@@ -4,7 +4,7 @@ import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import com.nakaharadev.roleworld.network.model.AbstractRequest
 
-class UpdateRequest(
+class ValueRequest(
     @SerializedName("value")
     @Expose
     val value: String

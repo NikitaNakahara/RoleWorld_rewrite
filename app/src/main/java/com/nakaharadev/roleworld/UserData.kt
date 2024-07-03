@@ -2,6 +2,7 @@ package com.nakaharadev.roleworld
 
 import android.graphics.Bitmap
 import com.nakaharadev.roleworld.models.Character
+import com.nakaharadev.roleworld.models.Friend
 
 
 object UserData {
@@ -13,4 +14,5 @@ object UserData {
     var roundedAvatar: Bitmap? = null
     var characters = HashMap<String, Character>()
     var charactersId = ArrayList<String>()
+    var friends = ArrayList<Friend>()
 }

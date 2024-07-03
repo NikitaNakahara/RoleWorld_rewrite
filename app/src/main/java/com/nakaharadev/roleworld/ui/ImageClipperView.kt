@@ -19,12 +19,12 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 class ImageClipperView
-    @JvmOverloads
-    constructor(context: Context,
-                attrs: AttributeSet? = null,
-                defStyleAttr: Int = 0,
-                defStyleRes: Int = 0
-    ) : View(context, attrs, defStyleAttr, defStyleRes) {
+@JvmOverloads
+constructor(context: Context,
+            attrs: AttributeSet? = null,
+            defStyleAttr: Int = 0,
+            defStyleRes: Int = 0
+) : View(context, attrs, defStyleAttr, defStyleRes) {
     private var image: Bitmap? = null
 
     private var imageX = 0

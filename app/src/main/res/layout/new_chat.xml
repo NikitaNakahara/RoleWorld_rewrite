@@ -3,56 +3,55 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="20dp">
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/back_icon"
-            android:padding="7dp"
-            android:id="@+id/close_new_chat"/>
-        <EditText
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:hint="@string/search"
-            android:textColor="@color/main_text"
-            android:textSize="20sp"
-            android:background="@color/transparent"
-            android:layout_marginHorizontal="10dp"/>
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/search_icon"
-            android:padding="5dp"
-            android:id="@+id/new_chat_search"/>
-    </LinearLayout>
     <ViewFlipper
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:inAnimation="@anim/flipper_in"
         android:outAnimation="@anim/flipper_out"
         android:id="@+id/new_chats_list_flipper">
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:id="@+id/new_chat_friends_list">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/nothing_to_show"
-                    android:textColor="@color/gray_text"
-                    android:textSize="15sp"
-                    android:id="@+id/profile_characters_list_empty"/>
+                android:layout_height="70dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="20dp">
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/back_icon"
+                    android:padding="7dp"
+                    android:id="@+id/close_new_chat"/>
+                <EditText
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:hint="@string/search"
+                    android:textColor="@color/main_text"
+                    android:textSize="20sp"
+                    android:background="@color/transparent"
+                    android:layout_marginHorizontal="10dp"
+                    android:id="@+id/new_chat_search_input"/>
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/search_icon"
+                    android:padding="5dp"
+                    android:id="@+id/new_chat_search"/>
             </LinearLayout>
-        </ScrollView>
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:id="@+id/new_chat_friends_list"/>
+            </ScrollView>
+        </LinearLayout>
+        <include layout="@layout/user_data"/>
     </ViewFlipper>
 </LinearLayout>

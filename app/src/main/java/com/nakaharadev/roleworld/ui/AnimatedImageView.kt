@@ -8,12 +8,12 @@ import android.util.AttributeSet
 import android.widget.ImageView
 
 class AnimatedImageView
-    @JvmOverloads
-    constructor(context: Context,
-                attrs: AttributeSet? = null,
-                defStyleAttr: Int = 0,
-                defStyleRes: Int = 0
-    ) : ImageView(context, attrs, defStyleAttr, defStyleRes) {
+@JvmOverloads
+constructor(context: Context,
+            attrs: AttributeSet? = null,
+            defStyleAttr: Int = 0,
+            defStyleRes: Int = 0
+) : ImageView(context, attrs, defStyleAttr, defStyleRes) {
     override fun setImageBitmap(bm: Bitmap?) {
         animateChange {
             super.setImageBitmap(bm)

@@ -33,4 +33,6 @@
     <string name="go_original">давай красиво)</string>
     <string name="id_already_exists">id уже существует</string>
     <string name="search">поиск</string>
+    <string name="add_to_friends">добавить в друзья</string>
+    <string name="characters">персонажи</string>
 </resources>

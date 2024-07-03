@@ -12,7 +12,7 @@
                 android:pivotY="252.5">
                 <path
                     android:pathData="M485,252.5C485,380.05 380.05,485 252.5,485S20,380.05 20,252.5S124.95,20 252.5,20"
-                    android:strokeWidth="40"
+                    android:strokeWidth="20"
                     android:fillColor="#00000000"
                     android:strokeColor="@color/main_text"
                     android:strokeLineCap="round"/>

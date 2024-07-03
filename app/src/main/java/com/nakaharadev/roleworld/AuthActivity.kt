@@ -157,6 +157,7 @@ class AuthActivity : Activity() {
                         UserData.email = findViewById<EditText>(R.id.sign_in_email).text.toString()
 
                         loadUserAvatar()
+                        runOnUiThread { finishAuth() }
                     }
                 }
             }
@@ -247,6 +248,7 @@ class AuthActivity : Activity() {
         val preferences = getSharedPreferences("user_data", Context.MODE_PRIVATE)
         val editor = preferences.edit()
         editor.putString("user_id", UserData.id)
+        editor.putString("show_id", UserData.showId)
         editor.putString("nickname", UserData.nickname)
         editor.putString("email", UserData.email)
         editor.putString("password", UserData.password)

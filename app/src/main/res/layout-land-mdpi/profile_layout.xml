@@ -94,7 +94,8 @@
                 android:paddingHorizontal="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:id="@+id/profile_friends_list">
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

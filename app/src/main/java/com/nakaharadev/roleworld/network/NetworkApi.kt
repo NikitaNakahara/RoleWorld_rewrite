@@ -1,12 +1,16 @@
 package com.nakaharadev.roleworld.network
 
+import com.nakaharadev.roleworld.network.model.requests.AddToFriendsRequest
 import com.nakaharadev.roleworld.network.model.requests.AuthRequest
-import com.nakaharadev.roleworld.network.model.requests.UpdateRequest
+import com.nakaharadev.roleworld.network.model.requests.ValueRequest
 import com.nakaharadev.roleworld.network.model.responses.AddResponse
 import com.nakaharadev.roleworld.network.model.responses.AuthResponse
 import com.nakaharadev.roleworld.network.model.responses.UpdateResponse
 import com.nakaharadev.roleworld.network.model.responses.GetCharacterResponse
 import com.nakaharadev.roleworld.network.model.responses.GetCharactersResponse
+import com.nakaharadev.roleworld.network.model.responses.GetUserResponse
+import com.nakaharadev.roleworld.network.model.responses.SearchResponse
+import com.nakaharadev.roleworldserver.models.AddToFriendsResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -33,13 +37,19 @@ interface NetworkApi {
     fun addCharacter(@Path("user_id") id: String, @Path("name") characterName: String, @Part avatar: MultipartBody.Part): Call<AddResponse>
 
     @POST("update_user/{user_id}/nickname")
-    fun updateNickname(@Path("user_id") id: String, @Body body: UpdateRequest): Call<UpdateResponse>
+    fun updateNickname(@Path("user_id") id: String, @Body body: ValueRequest): Call<UpdateResponse>
 
     @POST("update_user/{user_id}/show_id")
-    fun updateShowId(@Path("user_id") id: String, @Body body: UpdateRequest): Call<UpdateResponse>
+    fun updateShowId(@Path("user_id") id: String, @Body body: ValueRequest): Call<UpdateResponse>
 
     @POST("update_character/{id}/{data_type}")
-    fun updateCharacterData(@Path("id") id: String, @Path("data_type") dataType: String, @Body body: UpdateRequest): Call<UpdateResponse>
+    fun updateCharacterData(@Path("id") id: String, @Path("data_type") dataType: String, @Body body: ValueRequest): Call<UpdateResponse>
+
+    @POST("search")
+    fun search(@Body value: ValueRequest): Call<SearchResponse>
+
+    @POST("add_to_friends")
+    fun addToFriends(@Body body: AddToFriendsRequest): Call<AddToFriendsResponse>
 
     @GET("get_user_data/{user_id}/avatar")
     fun getAvatar(@Path("user_id") id: String): Call<ResponseBody>
@@ -56,4 +66,7 @@ interface NetworkApi {
     @Multipart
     @POST("update_character/{id}/avatar")
     fun updateCharacterAvatar(@Path("id") id: String, @Part file: MultipartBody.Part): Call<UpdateResponse>
+
+    @GET("get_user/{id}")
+    fun getUser(@Path("id") id: String): Call<GetUserResponse>
 }

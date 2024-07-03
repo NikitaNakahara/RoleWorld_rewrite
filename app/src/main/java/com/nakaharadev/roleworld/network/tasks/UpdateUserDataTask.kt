@@ -3,7 +3,7 @@ package com.nakaharadev.roleworld.network.tasks
 import com.nakaharadev.roleworld.App
 import com.nakaharadev.roleworld.UserData
 import com.nakaharadev.roleworld.network.model.AbstractResponse
-import com.nakaharadev.roleworld.network.model.requests.UpdateRequest
+import com.nakaharadev.roleworld.network.model.requests.ValueRequest
 import com.nakaharadev.roleworld.network.model.responses.UpdateResponse
 
 class UpdateUserDataTask(val id: String, val value: String, val type: Int) : AbstractTask() {
@@ -19,9 +19,9 @@ class UpdateUserDataTask(val id: String, val value: String, val type: Int) : Abs
         val response: UpdateResponse
 
         if (type == UPDATE_TYPE_NICKNAME)
-            response = App.networkApi.updateNickname(UserData.id, UpdateRequest(value)).execute().body()!!
+            response = App.networkApi.updateNickname(UserData.id, ValueRequest(value)).execute().body()!!
         else if (type == UPDATE_TYPE_SHOW_ID) {
-            response = App.networkApi.updateShowId(UserData.id, UpdateRequest(value)).execute().body()!!
+            response = App.networkApi.updateShowId(UserData.id, ValueRequest(value)).execute().body()!!
         } else return
 
         callback(response)

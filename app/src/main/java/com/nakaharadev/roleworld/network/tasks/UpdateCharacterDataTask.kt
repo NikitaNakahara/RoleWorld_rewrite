@@ -3,7 +3,7 @@ package com.nakaharadev.roleworld.network.tasks
 import com.nakaharadev.roleworld.App
 import com.nakaharadev.roleworld.network.model.AbstractRequest
 import com.nakaharadev.roleworld.network.model.AbstractResponse
-import com.nakaharadev.roleworld.network.model.requests.UpdateRequest
+import com.nakaharadev.roleworld.network.model.requests.ValueRequest
 
 class UpdateCharacterDataTask(val request: AbstractRequest, private val dataType: String, private val id: String) : AbstractTask() {
     override lateinit var callback: (AbstractResponse) -> Unit
@@ -17,7 +17,7 @@ class UpdateCharacterDataTask(val request: AbstractRequest, private val dataType
 
     @Throws(Exception::class)
     override fun task() {
-        val response = App.networkApi.updateCharacterData(id, dataType, request as UpdateRequest).execute()
+        val response = App.networkApi.updateCharacterData(id, dataType, request as ValueRequest).execute()
         callback(response.body()!!)
     }
 }

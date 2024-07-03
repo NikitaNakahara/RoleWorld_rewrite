@@ -5,22 +5,17 @@ import android.app.Activity
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.AnimatedVectorDrawable
-import android.graphics.drawable.AnimationDrawable
-import android.text.SpannableString
-import android.text.style.UnderlineSpan
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
-import coil.clear
 import com.nakaharadev.roleworld.Converter
 import com.nakaharadev.roleworld.R
 import com.nakaharadev.roleworld.file_tasks.UpdateCharactersFileTask
 import com.nakaharadev.roleworld.models.Character
-import com.nakaharadev.roleworld.network.model.requests.UpdateRequest
+import com.nakaharadev.roleworld.network.model.requests.ValueRequest
 import com.nakaharadev.roleworld.network.tasks.UpdateCharacterDataTask
 import com.nakaharadev.roleworld.services.FileManagerService
 import com.nakaharadev.roleworld.services.NetworkService
@@ -53,13 +48,10 @@ object CharacterDataController {
         initSexChange()
     }
 
+
     private fun initCharacterFields() {
         layout.findViewById<AnimatedImageView>(R.id.character_data_avatar).setImageBitmap(characterObj.avatar!!, false)
         layout.findViewById<TextView>(R.id.character_data_name).text = characterObj.name
-
-        val spannableStr = SpannableString(characterObj.id)
-        spannableStr.setSpan(UnderlineSpan(), 0, spannableStr.length, 0)
-        layout.findViewById<TextView>(R.id.character_data_id).text = spannableStr
 
         if (characterObj.bio.isNotEmpty()) {
             layout.findViewById<TextView>(R.id.character_bio).text = characterObj.bio
@@ -106,7 +98,7 @@ object CharacterDataController {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     val newName = it.text.toString()
                     NetworkService.addTask(UpdateCharacterDataTask(
-                        UpdateRequest(newName),
+                        ValueRequest(newName),
                         UpdateCharacterDataTask.DATA_TYPE_NAME,
                         characterObj.id
                     )) { _ ->
@@ -265,7 +257,7 @@ object CharacterDataController {
         (btn.drawable as AnimatedVectorDrawable).start()
 
         NetworkService.addTask(UpdateCharacterDataTask(
-            UpdateRequest(data),
+            ValueRequest(data),
             UpdateCharacterDataTask.DATA_TYPE_BIO,
             characterObj.id
         )) {
@@ -293,7 +285,7 @@ object CharacterDataController {
         (btn.drawable as AnimatedVectorDrawable).start()
 
         NetworkService.addTask(UpdateCharacterDataTask(
-            UpdateRequest(data),
+            ValueRequest(data),
             UpdateCharacterDataTask.DATA_TYPE_DESC,
             characterObj.id
         )) {
@@ -320,7 +312,7 @@ object CharacterDataController {
 
     private fun sendNewSex(value: String) {
         NetworkService.addTask(UpdateCharacterDataTask(
-            UpdateRequest(value),
+            ValueRequest(value),
             UpdateCharacterDataTask.DATA_TYPE_SEX,
             characterObj.id
         )) {
